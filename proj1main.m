@@ -60,3 +60,17 @@ saveas(gcf, 'figs/phase_plot.png');
 
 %% Nyquist plotting
 nyquist_exp(freq, amp_db_P, phase);
+%%%%% Problem 2 %%%%%
+
+% Simple controller
+K = 1;
+C = K;
+
+% Make a nyquist plot of the transfer function
+figure;
+nyquist(C*G);
+title('Nyquist Plot');
+xlabel('Real Axis');
+ylabel('Imaginary Axis');
+grid on;
+saveas(gcf, 'figs/nyquist_plot.png');
