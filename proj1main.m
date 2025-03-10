@@ -57,17 +57,36 @@ legend('P', 'P_0');
 saveas(gcf, 'figs/phase_plot.png');
 
 
-%%%%% Problem 2 %%%%%
+% %%%%% Problem 2 %%%%%
 
-% Simple controller
-K = 1;
-C = K;
+% % Simple controller - plot all K values on one Nyquist plot
+% K = [0.1, 1, 10, 100, 1000];
+% figure;
+% hold on;
+% legendEntries = cell(1, length(K));
 
-% Make a nyquist plot of the transfer function
-figure;
-nyquist(C*G);
-title('Nyquist Plot');
-xlabel('Real Axis');
-ylabel('Imaginary Axis');
-grid on;
-saveas(gcf, 'figs/nyquist_plot.png');
+% for i = 1:length(K)
+%     C = K(i);
+%     nyquist(C*G);
+%     legendEntries{i} = sprintf('K = %g', K(i));
+% end
+
+% title('Nyquist Plot - Multiple Gain Values');
+% xlabel('Real Axis');
+% ylabel('Imaginary Axis');
+% legend(legendEntries);
+% grid on;
+% saveas(gcf, 'figs/nyquist_plot_combined.png');
+
+% %%%%% Problem 5 %%%%%
+
+% % Step response
+% figure;
+% step(feedback(K*G,1));
+% title('Step Response');
+% xlabel('Time (s)');
+% ylabel('Amplitude');
+% grid on;
+% saveas(gcf, 'figs/step_response.png');
+
+% Sine response
