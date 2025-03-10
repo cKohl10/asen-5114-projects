@@ -15,12 +15,15 @@ phase_P0 = data(:,3);
 
 
 % Transfer function with anti resonance
+s = tf('s');
 DC_gain = 0.027;
-omega_ar = 0.73; % anti-resonance frequency
-omega_r = 1.3;
+omega_ar1 = 0.73; % anti-resonance frequency
+omega_r1 = 1.3;
+omega_ar2 = 4.9;
+omega_r2 = 6.1;
 zeta_z = 0.02; % Estimated damping
 zeta_p = 0.02;
-G = DC_gain * (1/s^2) * (s^2 + 2*zeta_z*omega_ar*s + omega_ar^2) / (s^2 + 2*zeta_p*omega_r*s + omega_r^2);
+G = DC_gain * (1/s^2) * (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2) * (s^2 + 2*zeta_z*omega_ar2*s + omega_ar2^2) / (s^2 + 2*zeta_p*omega_r2*s + omega_r2^2);
 [mag, phase, wout] = bode(G, freq);
 mag = squeeze(mag);
 
