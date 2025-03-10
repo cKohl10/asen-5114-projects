@@ -20,7 +20,7 @@ grid on;
 
 % Plot the phase plot
 figure;
-semilogx(freq, phase);
+semilogx(freq, rad2deg(phase));
 title('Phase Plot of Spacecraft Spin Module Frequency Response');
 xlabel('Frequency (Hz)');
 ylabel('Phase (deg)');
