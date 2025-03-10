@@ -29,9 +29,9 @@ numG = G.Numerator{1};
 denG = G.Denominator{1};
 [mag, phase, wout] = bode(G, freq);
 mag = squeeze(mag);
-
+phase = squeeze(phase);
 % Plot the bode plot
-figure;
+bode_fig = figure;
 semilogx(freq, amp_db_P);
 hold on;
 semilogx(wout, db(mag), 'r');
@@ -39,20 +39,21 @@ title('Bode Plot');
 xlabel('Frequency (Hz)');
 ylabel('Amplitude (dB)');
 xlim([freq(1), freq(end)]);
-legend('P', 'P_0', 'P(s)');
+legend('P', 'P(s)');
 grid on;
 saveas(gcf, 'figs/bode_plot.png');
 
 % Plot the phase plot
-figure;
+phase_fig = figure;
 semilogx(freq, rad2deg(phase_P));
 hold on;
+semilogx(freq, phase, 'r');
 title('Phase Plot');
 xlabel('Frequency (Hz)');
 ylabel('Phase (deg)');
 xlim([freq(1), freq(end)]);
 grid on;
-legend('P', 'P_0');
+legend('P', 'P(s)');
 saveas(gcf, 'figs/phase_plot.png');
 
 
@@ -82,8 +83,49 @@ cz1 = 1;
 cp1 = 2;
 C1 = (s+cz1)/(s+cp1);
 
-K_c = 1;
+K_c = 10;
 C = C1*K_c;
+
+[mag, phase, wout] = bode(C*G, freq);
+mag = squeeze(mag);
+phase = squeeze(phase);
+
+% Find zero crossings with linear interpolation
+zero_crossings = [];
+for i = 1:length(mag)-1
+    if (mag(i) - 1) * (mag(i+1) - 1) <= 0 % Check if there is a sign change
+        % Linear interpolation between points
+        x1 = freq(i);
+        x2 = freq(i+1);
+        y1 = mag(i) - 1;
+        y2 = mag(i+1) - 1
+        
+        % Calculate exact crossing point
+        crossover_freq = x1 - y1*(x2 - x1)/(y2 - y1);
+        zero_crossings = [zero_crossings, crossover_freq];
+    end
+end
+
+disp('Zero crossing frequencies (Hz):');
+disp(zero_crossings);
+
+% Plot the bode plot
+figure(bode_fig);
+hold on;
+yline(0, 'k--');
+for i = 1:length(zero_crossings)
+    xline(zero_crossings(i), 'k--');
+end
+semilogx(freq, db(mag), 'g');
+legend('P', 'P(s)', 'C(s)*P(s)');
+saveas(gcf, 'figs/bode_plot.png');
+
+% Plot the phase plot
+figure(phase_fig);
+hold on;
+semilogx(freq, phase, 'g');
+legend('P', 'P(s)', 'C(s)*P(s)');
+saveas(gcf, 'figs/phase_plot.png');
 
 numC = C.Numerator{1};
 denC = C.Denominator{1};
