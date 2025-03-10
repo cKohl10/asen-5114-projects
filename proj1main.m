@@ -8,15 +8,17 @@ close all;
 data = table2array(readtable('data\Spacecraft_spin_module_frequency_response_data.xlsx'));
 freq = data(:,1);
 amp = data(:,2);
-phase = data(:,3);
+amp_db = 20*log10(amp) - 20*log10(freq);
+phase = data(:,3) - pi/2;
 
 % Plot the bode plot
 figure;
-semilogx(freq, db(amp));
+semilogx(freq, amp_db);
 title('Bode Plot of Spacecraft Spin Module Frequency Response');
 xlabel('Frequency (Hz)');
 ylabel('Amplitude (dB)');
 grid on;
+saveas(gcf, 'figs/bode_plot.png');
 
 % Plot the phase plot
 figure;
@@ -25,5 +27,5 @@ title('Phase Plot of Spacecraft Spin Module Frequency Response');
 xlabel('Frequency (Hz)');
 ylabel('Phase (deg)');
 grid on;
-
+saveas(gcf, 'figs/phase_plot.png');
 
