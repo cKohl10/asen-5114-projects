@@ -56,3 +56,18 @@ grid on;
 legend('P', 'P_0');
 saveas(gcf, 'figs/phase_plot.png');
 
+
+%%%%% Problem 2 %%%%%
+
+% Simple controller
+K = 1;
+C = K;
+
+% Make a nyquist plot of the transfer function
+figure;
+nyquist(C*G);
+title('Nyquist Plot');
+xlabel('Real Axis');
+ylabel('Imaginary Axis');
+grid on;
+saveas(gcf, 'figs/nyquist_plot.png');
