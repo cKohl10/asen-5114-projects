@@ -5,36 +5,43 @@ clear;
 close all;
 
 % Read the data from the file
-data = table2array(readtable('data/Spacecraft_spin_module_frequency_response_data.xlsx'));
+data = readmatrix('data/Spacecraft_spin_module_frequency_response_data.xlsx');
 freq = data(:,1);
 amp = data(:,2);
-phase = data(:,3);
+amp_db_P = 20*log10(amp) - 20*log10(freq);
+amp_db_P0 = 20*log10(amp);
+phase_P = data(:,3) - pi/2;
+phase_P0 = data(:,3);
 
-
-% Estimate the transfer function
+%% Estimate the transfer function
+% Second order fit 
+DC_gain = 0.008;
+w0 = 0.4;
 s = tf('s');
-K = -1.5;
-H_first = K/(s^2);
-[mag_first,phase_first,w_first] = bode(H_first,freq);
-mag_first = squeeze(mag_first);
-phase_first = squeeze(phase_first);
+P = (DC_gain)/(s^2*(s/w0+1));
+[mag, phase_first, wout] = bode(P, freq);
+mag = squeeze(mag);
+
+
+
 
 % Plot the bode plot
 figure;
+semilogx(freq, amp_db_P);
 hold on;
-semilogx(freq, db(amp));
-semilogx(freq, db(mag_first));
-title('Bode Plot of Spacecraft Spin Module Frequency Response');
+semilogx(wout, db(mag), 'r');
+title('Bode Plot');
 xlabel('Frequency (Hz)');
 ylabel('Amplitude (dB)');
+xlim([freq(1), freq(end)]);
 grid on;
 
-% Plot the phase plot
-figure;
-semilogx(freq, rad2deg(phase));
-title('Phase Plot of Spacecraft Spin Module Frequency Response');
-xlabel('Frequency (Hz)');
-ylabel('Phase (deg)');
-grid on;
+% % Plot the phase plot
+% figure;
+% semilogx(freq, rad2deg(phase_P));
+% title('Phase Plot of Spacecraft Spin Module Frequency Response');
+% xlabel('Frequency (Hz)');
+% ylabel('Phase (deg)');
+% grid on;
 
 
