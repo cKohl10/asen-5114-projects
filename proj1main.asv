@@ -13,8 +13,7 @@ amp_db_P0 = 20*log10(amp);
 phase_P = data(:,3) - pi/2;
 phase_P0 = data(:,3);
 
-
-% Transfer function with anti resonance,
+% Transfer function with anti resonance, resonance pair
 s = tf('s');
 DC_gain = 0.041;
 omega_ar1 = 0.73;   % anti-resonance frequency
@@ -27,6 +26,7 @@ zeta_z2 = 0.03;
 zeta_p2 = 0.034;
 G = DC_gain * (1/s^2) * (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2) * (s^2 + 2*zeta_z2*omega_ar2*s + omega_ar2^2) / (s^2 + 2*zeta_p2*omega_r2*s + omega_r2^2);
 [mag, phase, wout] = bode(G, freq);
+phase = squeez(phase)
 mag = squeeze(mag);
 
 
@@ -57,3 +57,5 @@ grid on;
 legend('P', 'P_0');
 saveas(gcf, 'figs/phase_plot.png');
 
+
+%% Nyquist plotting

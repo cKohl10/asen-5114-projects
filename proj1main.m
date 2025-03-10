@@ -26,6 +26,7 @@ zeta_z2 = 0.03;
 zeta_p2 = 0.034;
 G = DC_gain * (1/s^2) * (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2) * (s^2 + 2*zeta_z2*omega_ar2*s + omega_ar2^2) / (s^2 + 2*zeta_p2*omega_r2*s + omega_r2^2);
 [mag, phase, wout] = bode(G, freq);
+phase = squeeze(phase);
 mag = squeeze(mag);
 
 
@@ -47,13 +48,13 @@ saveas(gcf, 'figs/bode_plot.png');
 figure;
 semilogx(freq, rad2deg(phase_P));
 hold on;
-semilogx(freq, rad2deg(phase_P0), '--');
+semilogx(freq, phase, '--');
 title('Phase Plot');
 xlabel('Frequency (Hz)');
 ylabel('Phase (deg)');
 xlim([freq(1), freq(end)]);
 grid on;
-legend('P', 'P_0');
+legend('Experimental', 'Analytical');
 saveas(gcf, 'figs/phase_plot.png');
 
 
