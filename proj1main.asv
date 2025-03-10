@@ -13,21 +13,21 @@ amp_db_P0 = 20*log10(amp);
 phase_P = data(:,3) - pi/2;
 phase_P0 = data(:,3);
 
-% Plant transfer function
-DC_gain = 0.01;
-p1 = 0.4; % rad/sec
-p2 = 0.5; % rad/sec
-p3 = 0.6;
+
+% Transfer function with anti resonance,
 s = tf('s');
-P = (DC_gain)/(s^2*(s/p1+1)*(s/p2+1)*(s/p3+1));
-[mag, phase, wout] = bode(P, freq);
+DC_gain = 0.041;
+omega_ar1 = 0.73;   % anti-resonance frequency
+omega_r1 = 1.32;    % resonance frequency
+omega_ar2 = 4.9;
+omega_r2 = 6.1;
+zeta_z = 0.015;
+zeta_p = 0.03;
+zeta_z2 = 0.03;
+zeta_p2 = 0.034;
+G = DC_gain * (1/s^2) * (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2) * (s^2 + 2*zeta_z2*omega_ar2*s + omega_ar2^2) / (s^2 + 2*zeta_p2*omega_r2*s + omega_r2^2);
+[mag, phase, wout] = bode(G, freq);
 mag = squeeze(mag);
-
-
-% Transfer function with anti resonance
-omega_ar = 0.73; % Exanti-resonance frequency
-zeta_z = 0.02; % Estimated damping
-G = (s^2 + 2*zeta_z*omega_ar*s + omega_ar^2) / (s^2 + 2*zeta_p*omega_r*s + omega_r^2);
 
 
 % Plot the bode plot
