@@ -34,13 +34,12 @@ mag = squeeze(mag);
 figure;
 semilogx(freq, amp_db_P);
 hold on;
-semilogx(freq, amp_db_P0, '--');
 semilogx(wout, db(mag), 'r');
 title('Bode Plot');
 xlabel('Frequency (Hz)');
 ylabel('Amplitude (dB)');
 xlim([freq(1), freq(end)]);
-legend('P', 'P_0', 'P(s)');
+legend('Empirical', 'Analytical');
 grid on;
 saveas(gcf, 'figs/bode_plot.png');
 
@@ -48,9 +47,9 @@ saveas(gcf, 'figs/bode_plot.png');
 figure;
 semilogx(freq, rad2deg(phase_P));
 hold on;
-semilogx(freq, phase, '--');
+semilogx(freq, phase, 'color', 'r');
 title('Phase Plot');
-xlabel('Frequency (Hz)');
+xlabel('Frequency (rad/s)');
 ylabel('Phase (deg)');
 xlim([freq(1), freq(end)]);
 grid on;
@@ -60,17 +59,4 @@ saveas(gcf, 'figs/phase_plot.png');
 
 %% Nyquist plotting
 nyquist_exp(freq, amp_db_P, phase);
-%%%%% Problem 2 %%%%%
 
-% Simple controller
-K = 1;
-C = K;
-
-% Make a nyquist plot of the transfer function
-figure;
-nyquist(C*G);
-title('Nyquist Plot');
-xlabel('Real Axis');
-ylabel('Imaginary Axis');
-grid on;
-saveas(gcf, 'figs/nyquist_plot.png');
