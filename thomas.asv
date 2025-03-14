@@ -63,16 +63,11 @@ nyquist_exp(freq, amp_db_P, phase);
 
 
 %% Problem 5
-% Define controller transfer function
-K = 1;
-C = 0*s + K;
-
-% Define the plant
-
+% Define controller t
 
 % Step response
-sinStepBool = 0; % Step
 out = sim('model_sine_2024a', 'StopTime', '100');  % Set simulation time to 100 seconds
+disp(pole(G))
 
 figure;
 plot(out.input.Time, out.input.Data, 'r--');
@@ -85,11 +80,10 @@ grid on;
 saveas(gcf, 'figs/step_response.png');
 
 % Sine response
-sinStepBool = 1;
 w_in_set = [0.5, 2]; % rad/s
 for i = 1:length(w_in_set)
     w_in = w_in_set(i);
-    out(i) = sim('model_sine_2024a', 'StopTime', '100');  % Set simulation time to 100 seconds
+    out(i) = sim('model_sine', 'StopTime', '100');  % Set simulation time to 100 seconds
     disp(pole(G))
 end
 
