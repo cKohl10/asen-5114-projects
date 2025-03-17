@@ -98,7 +98,7 @@ for i = 1:length(mag)-1
         x1 = freq(i);
         x2 = freq(i+1);
         y1 = mag(i) - 1;
-        y2 = mag(i+1) - 1
+        y2 = mag(i+1) - 1;
         
         % Calculate exact crossing point
         crossover_freq = x1 - y1*(x2 - x1)/(y2 - y1);
