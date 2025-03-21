@@ -14,7 +14,6 @@ phase_P = data(:,3) - pi/2;
 phase_P0 = data(:,3);
 
 % Transfer function with anti resonance, resonance pair
-% Transfer function with anti resonance, resonance pair
 s = tf('s');
 DC_gain = 10^(-15/20);
 pole_1 = 0.8;
@@ -107,15 +106,16 @@ OLZeros = zero(G);
 % CL Bandwidth ~ 1 Hz
 
 % Define Compensator Properties
-z_c = 0.01;   
-p_c = 2*pi;     
+a1 = 0.01;   
+b1 = 4*pi; 
+a2 = 1;
+b2 = 4*pi;
 % Compensator Gain (Tuned for Stability)
-K = 200;  
-
+K = 2500;
+zeta_z = zeta_z*;
+zeta_p = zeta_p*4;
 % Combined Notch Filter to Damp Resonance and Anti-Resonance
-i = sqrt(-1);
-C = K * 1/(s) * (s+z_c)/((s+p_c))* (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
-
+C = K * 1/(s) * ((s+a1)/(s+b1))* ((s+a2)/(s+b2))*(s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
 % Calculate Gain and Phase Margin 
 Lg = -C*G;
 [GM,PM] = margin(-Lg); 
@@ -160,9 +160,9 @@ grid on;
 % Plot Poles and Zeros 
 figure;
 hold on;
-plot(real(CLZeros), imag(CLZeros), 'ro', 'MarkerSize', 8);
+% plot(real(CLZeros), imag(CLZeros), 'ro', 'MarkerSize', 8);
 plot(real(CLPoles), imag(CLPoles), 'rx', 'MarkerSize', 10);
-plot(real(OLZeros), imag(OLZeros), 'bo', 'MarkerSize', 8);
+% plot(real(OLZeros), imag(OLZeros), 'bo', 'MarkerSize', 8);
 plot(real(OLPoles), imag(OLPoles), 'bx', 'MarkerSize', 10);
 
 xlabel('Real Axis');

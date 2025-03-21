@@ -106,14 +106,16 @@ OLZeros = zero(G);
 % CL Bandwidth ~ 1 Hz
 
 % Define Compensator Properties
-z_c = 0.01;   
-p_c = 2*pi;     
+a1 = 0.01;   
+b1 = 6*pi; 
+a2 = 1;
+b2 = 6*pi;
 % Compensator Gain (Tuned for Stability)
-K = 10;
-
+K = 8000;
+zeta_z = zeta_z*2;
+zeta_p = zeta_p*2;
 % Combined Notch Filter to Damp Resonance and Anti-Resonance
-C = K * 1/(s) * ((s+z_c)*(s+1))/(s+p_c)* (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
-
+C = K * 1/(s) * ((s+a1)/(s+b1))* ((s+a2)/(s+b2))*(s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
 % Calculate Gain and Phase Margin 
 Lg = -C*G;
 [GM,PM] = margin(-Lg); 
