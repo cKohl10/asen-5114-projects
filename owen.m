@@ -94,30 +94,63 @@ grid on;
 
 
 %%%%% Problem 3 %%%%%
-
 % Design a compensator to meet the following design requirements:
 % Phase Margin of > 40 deg
 % Gain margin > 10 dB
 % CL Bandwidth ~ 1 Hz
+
+% Define Compensator Properties
 a = 0;
-b = 2;
-Cl = (s+a)/(s+b)^2;
-K=100;
-for i = 1:length(K)  
-    C = K(i)*Cl;
-    Lg = C*G;
-    [GM,PM] = margin(Lg); 
-    GM = 20*log10(GM);
-    Margin(:,i) = [GM,PM]';
+b = 6;
+Cl = ((s+a)*(s+0.9425)/(s+b));
+K= 50;
+C = K*Cl;
+
+% Calculate Gain and Phase Margin 
+Lg = -C*G;
+[GM,PM] = margin(-Lg); 
+GM = 20*log10(GM);
+Margin = [GM,PM]';
+
+% Determine Closed Loop Poles and Zeros
+clSys = feedback(-Lg, 1);  
+CLPoles = pole(clSys);
+CLZeros = zero(clSys);
+
+% Evaluate Tracking 
+S = linspace(0,100,1000);
+for i  = 1:length(S)
+    Lg_eval(i) = evalfr(Lg, S(i));
+    Ts_eval(i) = 1/abs(1-Lg_eval(i)); 
 end
 
 % Create a Bode Plot
 figure;
 hold on;
-bode(Lg);
-title('Bode Plot with Compensator');
+bode(-Lg);
+title('Loop Gain Bode Plot with Compensator');
+grid on;
+% saveas(gcf, 'figs/P3_BodePlot.png');
+
+% Create a Nyquist Plot
+figure;
+hold on;
+nyquist(-Lg);
+title('Loop Gain Nyquist Plot')
 grid on;
 
+% Plot Poles and Zeros 
+figure;
+plot(real(CLZeros), imag(CLZeros), 'bo', 'MarkerSize', 8);
+hold on; % Hold the current plot to add poles
+plot(real(CLPoles), imag(CLPoles), 'rx', 'MarkerSize', 10);
+xlabel('Real Axis');
+ylabel('Imaginary Axis');
+title('Pole-Zero Plot');
+grid on;
+axis equal; 
+legend('Zeros', 'Poles');
+hold off; 
 
 
 
@@ -125,6 +158,7 @@ grid on;
 
 % % Step response
 % figure;
+
 % step(feedback(K*G,1));
 % title('Step Response');
 % xlabel('Time (s)');
