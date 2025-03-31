@@ -106,16 +106,19 @@ OLZeros = zero(G);
 % CL Bandwidth ~ 1 Hz
 
 % Define Compensator Properties
-a1 = 0.01;   
-b1 = 6*pi; 
-a2 = 1;
-b2 = 6*pi;
+z1 = 0.01;   
+p1 = 6*pi; 
+z2 = 1;
+p2 = 6*pi;
+
 % Compensator Gain (Tuned for Stability)
 K = 8000;
-zeta_z = zeta_z*2;
-zeta_p = zeta_p*2;
+zeta_z = 0.01;
+zeta_p = 0.06;
+
 % Combined Notch Filter to Damp Resonance and Anti-Resonance
-C = K * 1/(s) * ((s+a1)/(s+b1))* ((s+a2)/(s+b2))*(s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
+notch = (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
+C = K * (s + z1)/(s + p1) * (s + z2)/(s + p2) * 1/s * notch;
 % Calculate Gain and Phase Margin 
 Lg = -C*G;
 [GM,PM] = margin(-Lg); 
@@ -126,13 +129,19 @@ Margin = [GM,PM]';
 clSys = feedback(-Lg, 1);  
 CLPoles = pole(clSys);
 CLZeros = zero(clSys);
+bw = bandwidth(clSys);
 
 % Evaluate Tracking 
-S = linspace(0,100,1000);
-for i  = 1:length(S)
-    Lg_eval(i) = evalfr(Lg, S(i));
+w = logspace(-1, 2.5, 1000);  
+for i  = 1:length(w)
+    Lg_eval(i) = evalfr(Lg, w(i));
     Ts_eval(i) = 1/abs(1-Lg_eval(i)); 
 end
+
+% Display the margins and bandwidth 
+disp(['Gain Margin: ', num2str(GM), 'dB']);
+disp(['Phase Margin: ', num2str(PM), 'deg']);
+disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
 
 % Create a Bode Plot for Loop Gain
 figure;
@@ -160,9 +169,9 @@ grid on;
 % Plot Poles and Zeros 
 figure;
 hold on;
-% plot(real(CLZeros), imag(CLZeros), 'ro', 'MarkerSize', 8);
+plot(real(CLZeros), imag(CLZeros), 'ro', 'MarkerSize', 8);
 plot(real(CLPoles), imag(CLPoles), 'rx', 'MarkerSize', 10);
-% plot(real(OLZeros), imag(OLZeros), 'bo', 'MarkerSize', 8);
+plot(real(OLZeros), imag(OLZeros), 'bo', 'MarkerSize', 8);
 plot(real(OLPoles), imag(OLPoles), 'bx', 'MarkerSize', 10);
 
 xlabel('Real Axis');
@@ -174,17 +183,12 @@ legend('Closed Loop Zeros', 'Closed Loop Poles','Open Loop Zero','Open Loop Pole
 hold off; 
 
 
-
-% %%%%% Problem 5 %%%%%
-
-% % Step response
-% figure;
-
-% step(feedback(K*G,1));
-% title('Step Response');
-% xlabel('Time (s)');
-% ylabel('Amplitude');
-% grid on;
-% saveas(gcf, 'figs/step_response.png');
-
-% Sine response
+% Plot Tracking Error
+figure;
+semilogx(w, Ts_eval*100, 'LineWidth', 1.5);
+xlabel('Frequency (rad/s)');
+ylabel('Tracking Error (%)');
+title('Closed-Loop Tracking Error vs Frequency');
+grid on;
+% yline(5, '--r', '5% Error Threshold');
+ylim([0 100]);
