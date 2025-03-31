@@ -16,14 +16,15 @@ phase_P0 = data(:,3);
 % Transfer function with anti resonance, resonance pair
 s = tf('s');
 DC_gain = 10^(-15/20);
-pole_1 = 0.8;
-pole_2 = 0.01;
+pole_1 = 0.35;
+pole_2 = 0.35;
 omega_ar1 = 4.601;   % anti-resonance frequency
 omega_r1 = 8.347;    % resonance frequency
 zeta_z = 0.015;
-zeta_p = 0.03;
+zeta_p = 0.035;
 G_resonance = (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2);
 G = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
+
 
 [mag, phase, wout] = bode(G, freq);
 phase = squeeze(phase);
@@ -106,19 +107,20 @@ OLZeros = zero(G);
 % CL Bandwidth ~ 1 Hz
 
 % Define Compensator Properties
-z1 = 0.01;   
-p1 = 6*pi; 
-z2 = 1;
-p2 = 6*pi;
-
+z1 = 10;
+p1 = 0;
+z2 = 0.35;   
+p2 = .1*pi; 
+z3 = 1.5;
+p3 = 1;
 % Compensator Gain (Tuned for Stability)
-K = 8000;
+K = 20;
 zeta_z = 0.01;
 zeta_p = 0.06;
 
 % Combined Notch Filter to Damp Resonance and Anti-Resonance
 notch = (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
-C = K * (s + z1)/(s + p1) * (s + z2)/(s + p2) * 1/s * notch;
+C = K *(s+z1)/(s+p1)*(s+z2)/(s+p2)*(s+z2)/(s+p2)*notch;
 % Calculate Gain and Phase Margin 
 Lg = -C*G;
 [GM,PM] = margin(-Lg); 
