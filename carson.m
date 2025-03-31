@@ -79,18 +79,19 @@ saveas(gcf, 'figs/phase_plot.png');
 % saveas(gcf, 'figs/nyquist_plot_combined.png');
 
 %%%%% Problem 3 %%%%%
+disp('--- Problem 3 ---')
 cz1 = 1;
-cp1 = 2;
+cp1 = 0.2;
 C1 = (s+cz1)/(s+cp1);
 
-K_c = 10;
+K_c = 100;
 C = C1*K_c;
 
 [mag, phase, wout] = bode(C*G, freq);
 mag = squeeze(mag);
 phase = squeeze(phase);
 
-% Find zero crossings with linear interpolation
+% Find zero crossings on the bode plot with linear interpolation
 zero_crossings = [];
 for i = 1:length(mag)-1
     if (mag(i) - 1) * (mag(i+1) - 1) <= 0 % Check if there is a sign change
@@ -109,22 +110,70 @@ end
 disp('Zero crossing frequencies (Hz):');
 disp(zero_crossings);
 
+% Get the phase margin and gain margin at the zero crossings
+for i = 1:length(zero_crossings)
+    % Get the closest phase value in the fitted plot to the zero crossing frequency
+    [~, idx] = min(abs(freq - zero_crossings(i)));
+    zc_phase(i) = phase(idx);
+    pm(i) = zc_phase(i) + 180;
+end
+disp('Phase margin at zero crossings (deg):');
+disp(pm);
+
+% Find -180 degree crossings with linear interpolation
+phase_180_crossings = [];
+for i = 1:length(phase)-1
+    if (phase(i) + 180) * (phase(i+1) + 180) <= 0 % Check if there is a sign change around -180
+        % Linear interpolation between points
+        x1 = freq(i);
+        x2 = freq(i+1);
+        y1 = phase(i) + 180;
+        y2 = phase(i+1) + 180;
+        
+        % Calculate exact crossing point
+        crossover_freq = x1 - y1*(x2 - x1)/(y2 - y1);
+        phase_180_crossings = [phase_180_crossings, crossover_freq];
+    end
+end
+
+if isempty(phase_180_crossings)
+    disp('Infinite gain margin');
+else
+    % Calculate gain margins at each -180 degree crossing
+    for i = 1:length(phase_180_crossings)
+        [~, idx] = min(abs(freq - phase_180_crossings(i)));
+        gm(i) = -db(mag(idx));  % Gain margin in dB
+    end
+    disp('Gain margins (dB):');
+    disp(gm);
+end
+
+% Find -3dB crossing (bandwidth)
+bandwidth_idx = find(db(mag) <= -3, 1, 'first');
+if ~isempty(bandwidth_idx)
+    bandwidth_freq = freq(bandwidth_idx);
+    disp(['Bandwidth = ', num2str(bandwidth_freq), ' Hz']);
+end
+
 % Plot the bode plot
 figure(bode_fig);
 hold on;
+semilogx(freq, db(mag), 'g');
+scatter(phase_180_crossings, -gm, 'r', 'o');
 yline(0, 'k--');
 for i = 1:length(zero_crossings)
     xline(zero_crossings(i), 'k--');
 end
-semilogx(freq, db(mag), 'g');
-legend('P', 'P(s)', 'C(s)*P(s)');
+legend('P', 'P(s)', 'C(s)*P(s)', 'Gain Margin Points');
 saveas(gcf, 'figs/bode_plot.png');
 
 % Plot the phase plot
 figure(phase_fig);
 hold on;
 semilogx(freq, phase, 'g');
-legend('P', 'P(s)', 'C(s)*P(s)');
+scatter(zero_crossings, zc_phase, 'r', 'o');
+yline(-180, 'k--');
+legend('P', 'P(s)', 'C(s)*P(s)', 'Phase Margin Points');
 saveas(gcf, 'figs/phase_plot.png');
 
 numC = C.Numerator{1};
@@ -134,7 +183,7 @@ denC = C.Denominator{1};
 
 % Step response
 out = sim('model_step', 'StopTime', '100');  % Set simulation time to 100 seconds
-disp(pole(G))
+% disp(pole(G))
 
 figure;
 plot(out.input.Time, out.input.Data, 'r--');
@@ -151,7 +200,7 @@ w_in_set = [0.5, 2]; % rad/s
 for i = 1:length(w_in_set)
     w_in = w_in_set(i);
     out(i) = sim('model_sine', 'StopTime', '100');  % Set simulation time to 100 seconds
-    disp(pole(G))
+    % disp(pole(G))
 end
 
 figure;
