@@ -1,5 +1,5 @@
 % ASEN 5114 Project 1
-% Authors: Carosn Kohlbenner, Thomas Dunnington, and Owen Craig4
+% Authors: Carosn Kohlbenner, Thomas Dunnington, and Owen Craig
 clc;
 clear;
 close all;
@@ -110,17 +110,16 @@ OLZeros = zero(G);
 z1 = 10;
 p1 = 0;
 z2 = 0.35;   
-p2 = .1*pi; 
-z3 = 1.5;
-p3 = 1;
+p2 = 2*pi; 
+
 % Compensator Gain (Tuned for Stability)
-K = 20;
+K = 9;
 zeta_z = 0.01;
 zeta_p = 0.06;
 
 % Combined Notch Filter to Damp Resonance and Anti-Resonance
 notch = (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
-C = K *(s+z1)/(s+p1)*(s+z2)/(s+p2)*(s+z2)/(s+p2)*notch;
+C = K *(s/z2+1)/(s/p2+1) * notch * 1/(s/(12*pi)+1);
 % Calculate Gain and Phase Margin 
 Lg = -C*G;
 [GM,PM] = margin(-Lg); 
