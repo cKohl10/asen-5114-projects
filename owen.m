@@ -16,8 +16,8 @@ phase_P0 = data(:,3);
 % Transfer function with anti resonance, resonance pair
 s = tf('s');
 DC_gain = 10^(-15/20);
-pole_1 = 0.35;
-pole_2 = 0.35;
+pole_1 = 0.3;
+pole_2 = 0.4;
 omega_ar1 = 4.601;   % anti-resonance frequency
 omega_r1 = 8.347;    % resonance frequency
 zeta_z = 0.015;
@@ -107,19 +107,29 @@ OLZeros = zero(G);
 % CL Bandwidth ~ 1 Hz
 
 % Define Compensator Properties
-z1 = 10;
-p1 = 0;
-z2 = 0.35;   
-p2 = 2*pi; 
+z1 = 0.3;
+p1 = 20;
+z2 = 0.4;   
+p2 = 20; 
 
 % Compensator Gain (Tuned for Stability)
-K = 9;
-zeta_z = 0.01;
-zeta_p = 0.06;
+K = 10;
+zeta_z = 0.02;
+% zeta_p = 0.6;
 
 % Combined Notch Filter to Damp Resonance and Anti-Resonance
 notch = (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
-C = K *(s/z2+1)/(s/p2+1) * notch * 1/(s/(12*pi)+1);
+
+lag = 1/(s/3*pi+1);
+
+lead = (s/z1+1)/(s/p1+1);
+
+lead2 = (s/z2+1)/(s/p2+1);
+
+lead2 = (s/2*pi+1)/(s/2.5*pi+1);
+
+C = K * notch * lead * lead2 * lag;
+
 % Calculate Gain and Phase Margin 
 Lg = -C*G;
 [GM,PM] = margin(-Lg); 
@@ -151,6 +161,18 @@ bode(-Lg);
 title('Loop Gain Bode Plot with Compensator');
 grid on;
 % saveas(gcf, 'figs/P3_BodePlot.png');
+
+% Create Bode plot of compesators and LG
+w = logspace(-1, 2, 1000);  % 0.1 to 100 rad/s
+figure;
+bode(C, w); 
+hold on;
+bode(-Lg,w)
+bode(G,w)
+legend('C','LG','Plant');
+title('Bode Plots of Compensator, LG, Plant');
+grid on;
+
 
 % Create a Bode Plot for Loop Gain
 figure;
