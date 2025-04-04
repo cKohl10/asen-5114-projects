@@ -28,8 +28,8 @@ G_required = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
 
 % Intermediate model
 DC_gain = 10^(-15/20);
-pole_1 = 0.35;
-pole_2 = 0.35;
+pole_1 = 0.3;
+pole_2 = 0.4;
 omega_ar1 = 4.601;   % anti-resonance frequency
 omega_r1 = 8.347;    % resonance frequency
 zeta_z = 0.015;
