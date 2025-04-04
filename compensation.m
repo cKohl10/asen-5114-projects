@@ -23,205 +23,211 @@ w_min = min(freq_exp);
 % w_min = 0;
 w_max = max(freq_exp);
 
-%% Compensation
-%%%% Anti Notch Filter to Cancel anti-resonance
-w_n = omega_ar1;
-w_d = omega_ar1;
-zeta_n = 0.4;     
-zeta_d = 0.015; 
+for i = 1:3
+    for j = 1:3
+        params = {[1, i+0.1, j], % 1: Compensator
+                }; % 6: Derivative Gain
+        K = 150;
+        Lg = loopgain(G,s, params, K);
+        plot_lg(Lg, w_min, w_max);
+    end
+end
 
-% Notch Filter Transfer Function
-notch_filter_ar = (s^2 + 2*zeta_n*w_n*s + w_n^2) / (s^2 + 2*zeta_d*w_d*s + w_d^2);
+function plot_lg(figs, Lg, w_min, w_max)
+    % Compute the frequency response
+    [mag_lg, phase_lg, wout_lg] = bode(Lg);
+    phase_lg = squeeze(phase_lg);
+    mag_lg = squeeze(mag_lg);
 
-% Visualize the notch
-figure();
-[mag_n, phase_n, wout_n] = bode(notch_filter_ar);
-phase_n = squeeze(phase_n);
-mag_n = squeeze(mag_n);
+    % Calculate the closed loop response
+    T = feedback(Lg, 1);
+    [mag_cl, phase_cl, wout_cl] = bode(T);
+    phase_cl = squeeze(phase_cl);
+    mag_cl = squeeze(mag_cl);
 
-%%%% Notch Filter to cancel out resonance
-w_n = omega_r1;
-w_d = omega_r1;
-zeta_n = 0.6;     
-zeta_d = 0.035; 
+   
 
-% Notch Filter Transfer Function
-notch_filter_r = (s^2 + 2*zeta_d*w_d*s + w_d^2) / (s^2 + 2*zeta_n*w_n*s + w_n^2);
+    % Calculate the closed loop bandwidth
+    closed_loop_bandwidth = bandwidth(T);
 
-%%%% Pole Cancellation
-% Cancel out the zero causing the anti-resonance
-pole_cancel = 1 / (s^2 + 2*zeta_d*w_d*s + w_d^2);
+    % Calculate the open loop stability margins
+    % Phase margin
+    gain_crossover_ind = find(diff(sign(db(mag_lg))) < 0 | diff(sign(db(mag_lg))) == 2);
 
-% Note: Try to achieve control objectives without using a notch filter to
-% damp out the anti-resonance first (i.e. just use lead and constant gain)
+    % Gain Margin
+    phase_crossover_ind = find(diff(sign(phase_lg + 180)) < 0 | diff(sign(phase_lg + 180)) == 2);
 
-% Proportional Gain
-K = 150;
+    %% Loop Gain Bode Plot
+    % Plot the model bode plot
+    figure(figs(1));
+    set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
+    subplot(2,1,1)
+    semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
+    hold on;
+    if(~isempty(phase_crossover_ind))
+        for i = 1:length(phase_crossover_ind)
+            if abs(db(mag_lg(phase_crossover_ind(i)))) > 10
+                line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'g', 'LineWidth', 1.5);
+            else
+                line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'r', 'LineWidth', 1.5);
+            end
+        end
+    end
+    yline(0, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
+    title('Magnitude');
+    xlabel('Frequency (rad/s)');
+    ylabel('Amplitude (dB)');
+    xlim([wout_lg(1), wout_lg(end)]);
+    grid on;
 
-%%%% Lead compensator
-a1 = 7;
-b1 = 13;
-C1 = b1 / a1 * (s + a1) / (s + b1);
-
-% Second Compensator
-a2 = 2;
-b2 = 20;
-C2 = b2 / a2 * (s + a2) / (s + b2);
-
-% Third Compensator
-a3 = 10;
-b3 = 20;
-C3 = b3 / a3 * (s + a3) / (s + b3);
-
-% Controller
-C1 = 1;
-C2 = 1;
-C3 = 1;
-% notch_filter_ar = 1;
-notch_filter_r = 1;
-pole_cancel = 1;
-% K = 1;
-C = K*C1*C2*C3*notch_filter_ar*notch_filter_r*pole_cancel;
-
-% Negative Loop Gain
-Lg = C*G;
-
-% Compute the frequency response
-[mag_lg, phase_lg, wout_lg] = bode(Lg);
-phase_lg = squeeze(phase_lg);
-mag_lg = squeeze(mag_lg);
-
-% Calculate the closed loop response
-T = feedback(Lg, 1);
-[mag_cl, phase_cl, wout_cl] = bode(T);
-phase_cl = squeeze(phase_cl);
-mag_cl = squeeze(mag_cl);
-
-% Calculate the closed loop bandwidth
-closed_loop_bandwidth = bandwidth(T);
-
-% Calculate the open loop stability margins
-% Phase margin
-gain_crossover_ind = find(diff(sign(db(mag_lg))) < 0 | diff(sign(db(mag_lg))) == 2);
-
-% Gain Margin
-phase_crossover_ind = find(diff(sign(phase_lg + 180)) < 0 | diff(sign(phase_lg + 180)) == 2);
-
-%% Loop Gain Bode Plot
-% Plot the model bode plot
-figure;
-set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
-subplot(2,1,1)
-semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
-hold on;
-if(~isempty(phase_crossover_ind))
-    for i = 1:length(phase_crossover_ind)
-        if abs(db(mag_lg(phase_crossover_ind(i)))) > 10
-            line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'g', 'LineWidth', 1.5);
+    % Plot the phase plot
+    subplot(2,1,2)
+    semilogx(wout_lg, phase_lg, 'linewidth', 2);
+    hold on;
+    for i = 1:length(gain_crossover_ind)
+        % Plot green if good phase margin, otherwise red
+        if phase_lg(gain_crossover_ind(i)) >= -140
+            good_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'g', 'LineWidth', 1.5);
         else
-            line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'r', 'LineWidth', 1.5);
+            bad_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'r', 'LineWidth', 1.5);
         end
     end
-end
-yline(0, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
-title('Magnitude');
-xlabel('Frequency (rad/s)');
-ylabel('Amplitude (dB)');
-xlim([wout_lg(1), wout_lg(end)]);
-grid on;
+    yline(-180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
+    yline(-140, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
+    title('Phase');
+    xlabel('Frequency (rad/s)');
+    ylabel('Phase (deg)');
+    pause(1e9) %gotem
+    xlim([wout_lg(1), wout_lg(end)]);
+    sgtitle('Loop Gain Bode Plot')
+    grid on;
 
-% Plot the phase plot
-subplot(2,1,2)
-semilogx(wout_lg, phase_lg, 'linewidth', 2);
-hold on;
-for i = 1:length(gain_crossover_ind)
-    % Plot green if good phase margin, otherwise red
-    if phase_lg(gain_crossover_ind(i)) >= -140
-        good_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'g', 'LineWidth', 1.5);
-    else
-        bad_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'r', 'LineWidth', 1.5);
-    end
-end
-yline(-180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
-yline(-140, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
-title('Phase');
-xlabel('Frequency (rad/s)');
-ylabel('Phase (deg)');
-xlim([wout_lg(1), wout_lg(end)]);
-sgtitle('Loop Gain Bode Plot')
-grid on;
-
-% Add legend
-try
-    legend([good_phase, bad_phase], 'Good Phase Margin', 'Bad Phase Margin', 'location' ,'best');
-catch
-    try 
-        legend([good_phase], 'Good Phase Margin', 'location' ,'best');
+    % Add legend
+    try
+        legend([good_phase, bad_phase], 'Good Phase Margin', 'Bad Phase Margin', 'location' ,'best');
     catch
-        try
-            legend([bad_phase], 'Bad Phase Margin', 'location' ,'best');
+        try 
+            legend([good_phase], 'Good Phase Margin', 'location' ,'best');
         catch
-            x = 1;
+            try
+                legend([bad_phase], 'Bad Phase Margin', 'location' ,'best');
+            catch
+                x = 1;
+            end
         end
     end
+
+
+    %% Closed Loop Bode Plot
+    figure(figs(2));
+    set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
+    subplot(2,1,1)
+    semilogx(wout_cl, db(mag_cl), 'color', 'g', 'linewidth', 2);
+    hold on;
+    bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
+    yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
+    title('Magnitude');
+    xlabel('Frequency (rad/s)');
+    ylabel('Amplitude (dB)');
+    xlim([wout_cl(1), wout_cl(end)]);
+    legend([bandwidth_plot], 'Bandwidth');
+    grid on;
+
+    % Plot the phase plot
+    subplot(2,1,2)
+    semilogx(wout_cl, phase_cl, 'color', 'g', 'linewidth', 2);
+    hold on;
+    % xline(2*pi, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
+    title('Phase');
+    xlabel('Frequency (rad/s)');
+    ylabel('Phase (deg)');
+    xlim([wout_cl(1), wout_cl(end)]);
+    sgtitle('Closed Loop Bode Plot')
+    grid on;
+
+
+    %% Nyquist Plot
+    % Create a nyquist plot of the model
+    figure(figs(2));
+    nyquist(Lg, {w_min, w_max});
+    axis equal;
+
+
+    % %% Notch Filter Plot
+    % figure;
+    % set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
+    % subplot(2,1,1)
+    % semilogx(wout_n, db(mag_n), 'b', 'linewidth', 2);
+    % hold on;
+    % title('Magnitude');
+    % xlabel('Frequency (rad/s)');
+    % ylabel('Amplitude (dB)');
+    % xlim([wout_n(1), wout_n(end)]);
+    % grid on;
+
+    % Plot the phase plot
+    % subplot(2,1,2)
+    % semilogx(wout_n, phase_n, 'linewidth', 2);
+    % hold on;
+    % title('Phase');
+    % xlabel('Frequency (rad/s)');
+    % ylabel('Phase (deg)');
+    % xlim([wout_n(1), wout_n(end)]);
+    % sgtitle('Anti-Notch Filter Bode Plot')
+    % grid on;
 end
 
+function Lg = loopgain(G,s, params, K)
 
-%% Closed Loop Bode Plot
-figure;
-set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
-subplot(2,1,1)
-semilogx(wout_cl, db(mag_cl), 'color', 'g', 'linewidth', 2);
-hold on;
-bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
-yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
-title('Magnitude');
-xlabel('Frequency (rad/s)');
-ylabel('Amplitude (dB)');
-xlim([wout_cl(1), wout_cl(end)]);
-legend([bandwidth_plot], 'Bandwidth');
-grid on;
+    for i = 1:length(params)
+        C_set(i) = comp_select(params{i}, s);
+    end
 
-% Plot the phase plot
-subplot(2,1,2)
-semilogx(wout_cl, phase_cl, 'color', 'g', 'linewidth', 2);
-hold on;
-% xline(2*pi, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
-title('Phase');
-xlabel('Frequency (rad/s)');
-ylabel('Phase (deg)');
-xlim([wout_cl(1), wout_cl(end)]);
-sgtitle('Closed Loop Bode Plot')
-grid on;
+    C = K;
+    for i = 1:length(C_set)
+        C = C*C_set(i);
+    end
 
+    % Negative Loop Gain
+    Lg = C*G;
 
-%% Nyquist Plot
-% Create a nyquist plot of the model
-figure();
-nyquist(Lg, {w_min, w_max});
-axis equal;
+end
 
+function C = comp_select(params, s)
+    % Select the compensator based on the type
+    % type = 1: Lag Compensator
+    % type = 2: Lead Compensator
+    % type = 3: Notch Filter
 
-%% Notch Filter Plot
-figure;
-set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
-subplot(2,1,1)
-semilogx(wout_n, db(mag_n), 'b', 'linewidth', 2);
-hold on;
-title('Magnitude');
-xlabel('Frequency (rad/s)');
-ylabel('Amplitude (dB)');
-xlim([wout_n(1), wout_n(end)]);
-grid on;
+    C = 1;
+    type = params(1);
+    if type == 1
+        % Lag Compensator (Pole is greater than zero)
+        % a > b
+        
+        % Lead Compensator (Zero is greater than pole)
+        % a < b
+        a = params(1);
+        b = params(2);
+        C = (s/a + 1) / (s/b + 1);
 
-% Plot the phase plot
-subplot(2,1,2)
-semilogx(wout_n, phase_n, 'linewidth', 2);
-hold on;
-title('Phase');
-xlabel('Frequency (rad/s)');
-ylabel('Phase (deg)');
-xlim([wout_n(1), wout_n(end)]);
-sgtitle('Anti-Notch Filter Bode Plot')
-grid on;
+    elseif type == 2
+        % Notch Filter
+        zeta = params(1);
+        omega = params(2);
+        C = (s^2 + 2*zeta*omega*s + omega^2) / (s^2 + 2*zeta*omega*s + omega^2);
 
+    elseif type == 3
+        % Proportional Gain
+        K = params(1);
+        C = K;
+    elseif type == 4
+        % Integral Gain
+        K = params(1);
+        C = K / s;
+    elseif type == 5
+        % Derivative Gain
+        K = params(1);
+        C = K * s;
+    end
+end
