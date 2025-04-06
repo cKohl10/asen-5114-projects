@@ -215,3 +215,5 @@ title('Closed-Loop Tracking Error vs Frequency');
 grid on;
 % yline(5, '--r', '5% Error Threshold');
 ylim([0 100]);
+
+prob6(C, s);

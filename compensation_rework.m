@@ -23,17 +23,25 @@ w_min = min(freq_exp);
 % w_min = 0;
 w_max = max(freq_exp);
 
-for i = 1:3
-    for j = 1:3
-        params = {[1, i+0.1, j], % 1: Compensator
-                }; % 6: Derivative Gain
-        K = 150;
+figs = [figure, figure];
+a_max = 0.1;
+first_plot = true;
+for a = 0.02:0.02:a_max
+    for b = 1
+        first_plot = false;
+        transparency = a/a_max;
+        params = {  % [1, a, 1];
+                    % [1, 0.3, 20]; 
+                    % [1, 0.4, 20]; 
+                    [2, zeta_z, zeta_p, omega_r1, omega_ar1]
+                }; 
+        K = 100;
         Lg = loopgain(G,s, params, K);
-        plot_lg(Lg, w_min, w_max);
+        plot_lg(figs, Lg, w_min, w_max, transparency, first_plot);
     end
 end
 
-function plot_lg(figs, Lg, w_min, w_max)
+function plot_lg(figs, Lg, w_min, w_max, transparency, first_plot)
     % Compute the frequency response
     [mag_lg, phase_lg, wout_lg] = bode(Lg);
     phase_lg = squeeze(phase_lg);
@@ -62,7 +70,7 @@ function plot_lg(figs, Lg, w_min, w_max)
     figure(figs(1));
     set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
     subplot(2,1,1)
-    semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
+    semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2, 'color', [transparency, 0, 0]);
     hold on;
     if(~isempty(phase_crossover_ind))
         for i = 1:length(phase_crossover_ind)
@@ -82,7 +90,7 @@ function plot_lg(figs, Lg, w_min, w_max)
 
     % Plot the phase plot
     subplot(2,1,2)
-    semilogx(wout_lg, phase_lg, 'linewidth', 2);
+    semilogx(wout_lg, phase_lg, 'linewidth', 2, 'color', [transparency, 0, 0]);
     hold on;
     for i = 1:length(gain_crossover_ind)
         % Plot green if good phase margin, otherwise red
@@ -97,7 +105,6 @@ function plot_lg(figs, Lg, w_min, w_max)
     title('Phase');
     xlabel('Frequency (rad/s)');
     ylabel('Phase (deg)');
-    pause(1e9) %gotem
     xlim([wout_lg(1), wout_lg(end)]);
     sgtitle('Loop Gain Bode Plot')
     grid on;
@@ -122,35 +129,39 @@ function plot_lg(figs, Lg, w_min, w_max)
     figure(figs(2));
     set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
     subplot(2,1,1)
-    semilogx(wout_cl, db(mag_cl), 'color', 'g', 'linewidth', 2);
+    semilogx(wout_cl, db(mag_cl), 'color', [transparency, 0, 0], 'linewidth', 2);
     hold on;
-    bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
-    yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
-    title('Magnitude');
-    xlabel('Frequency (rad/s)');
-    ylabel('Amplitude (dB)');
-    xlim([wout_cl(1), wout_cl(end)]);
-    legend([bandwidth_plot], 'Bandwidth');
-    grid on;
+    if first_plot
+        bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
+        yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
+        title('Magnitude');
+        xlabel('Frequency (rad/s)');
+        ylabel('Amplitude (dB)');
+        xlim([wout_cl(1), wout_cl(end)]);
+        legend([bandwidth_plot], 'Bandwidth');
+        grid on;
+    end
 
     % Plot the phase plot
     subplot(2,1,2)
-    semilogx(wout_cl, phase_cl, 'color', 'g', 'linewidth', 2);
+    semilogx(wout_cl, phase_cl, 'color', [transparency, 0, 0], 'linewidth', 2);
     hold on;
     % xline(2*pi, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
-    title('Phase');
-    xlabel('Frequency (rad/s)');
-    ylabel('Phase (deg)');
-    xlim([wout_cl(1), wout_cl(end)]);
-    sgtitle('Closed Loop Bode Plot')
-    grid on;
+    if first_plot
+        title('Phase');
+        xlabel('Frequency (rad/s)');
+        ylabel('Phase (deg)');
+        xlim([wout_cl(1), wout_cl(end)]);
+        sgtitle('Closed Loop Bode Plot')
+        grid on;
+    end
 
 
     %% Nyquist Plot
     % Create a nyquist plot of the model
-    figure(figs(2));
-    nyquist(Lg, {w_min, w_max});
-    axis equal;
+    % figure(figs(2));
+    % nyquist(Lg, {w_min, w_max});
+    % axis equal;
 
 
     % %% Notch Filter Plot
@@ -201,6 +212,7 @@ function C = comp_select(params, s)
 
     C = 1;
     type = params(1);
+    params = params(2:end);
     if type == 1
         % Lag Compensator (Pole is greater than zero)
         % a > b
@@ -213,9 +225,11 @@ function C = comp_select(params, s)
 
     elseif type == 2
         % Notch Filter
-        zeta = params(1);
-        omega = params(2);
-        C = (s^2 + 2*zeta*omega*s + omega^2) / (s^2 + 2*zeta*omega*s + omega^2);
+        zeta_n = params(1);
+        zeta_d = params(2);
+        omega_n = params(3);
+        omega_d = params(4);
+        C = (s^2 + 2*zeta_n*omega_n*s + omega_n^2) / (s^2 + 2*zeta_d*omega_d*s + omega_d^2);
 
     elseif type == 3
         % Proportional Gain
