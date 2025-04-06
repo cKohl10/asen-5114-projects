@@ -250,6 +250,7 @@ grid on;
 
 
 %% Lead Plot
+% Just the lead compensator Bode plot
 figure;
 set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
 subplot(2,1,1)
