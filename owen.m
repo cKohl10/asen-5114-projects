@@ -164,22 +164,27 @@ disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
 %% Problem 4: Emperical Compensator
 % Define Compensator
 % Pole Cancellation: Cancel out the zero and pole with "approximate" cancellation
-zeta_r = 1*0.035;
-zeta_ar = 2*0.015;
+zeta_r = 0.2;
+zeta_ar = 0.1;
 omega_ar1 = 4.601;
-omega_r1 = 8.34;
-pole_cancel = 1 / (s^2 + 2*zeta_ar*omega_ar1*s + omega_ar1^2);
+omega_r1 = 8.22;
+pole_cancel = (s^2 + 2*zeta_r*omega_r1*s + omega_r1^2)/ (s^2 + 2*zeta_ar*omega_ar1*s + omega_ar1^2);
 
 % Proportional Gain
-K = 100;
+K = 1.2;
 
 % Lead compensator
 a1 = 0.4;
 b1 = 1;
 C1 = b1 / a1 * (s + a1) / (s + b1);
 
+% Lag Compensator
+a2 = 3;
+b2 = 11;
+C2 = b2 / a2 * (s + a2) / (s + b2);
+
 % Total Compensator
-C = K*C1*pole_cancel;
+C = K*C1*C2*pole_cancel;
 
 % Evaluate the Compensator over Emperical Frequency Sweep 
 C_eval = zeros(size(freq));
@@ -214,18 +219,18 @@ gain_crossover_freq = interp1([m1, m2], [w1, w2], 1);
 phase_at_gc = interp1([w1, w2], [p1, p2], gain_crossover_freq);
 PM = 180 + phase_at_gc;
 
-% Find the Gain Margin (RN it is INF)
-crossing_idx = find(Lg_phase <= -177); 
-idx = crossing_idx(1); 
-w1 = freq(idx-1);
-w2 = freq(idx+1);
-p1 = Lg_phase(idx-1);
-p2 = Lg_phase(idx+1);
-m1 = (Lg_mag(idx-1));
-m2 = (Lg_mag(idx+1));
-phase_crossover_freq = interp1([p1, p2], [w1, w2], -177);
-mag_at_pc = interp1([w1, w2], [m1, m2], phase_crossover_freq);
-GM = 20 * log10(mag_at_pc);
+% % Find the Gain Margin (RN it is INF)
+% crossing_idx = find(Lg_phase <= -178); 
+% idx = crossing_idx(1); 
+% w1 = freq(idx-1);
+% w2 = freq(idx+1);
+% p1 = Lg_phase(idx-1);
+% p2 = Lg_phase(idx+1);
+% m1 = (Lg_mag(idx-1));
+% m2 = (Lg_mag(idx+1));
+% phase_crossover_freq = interp1([p1, p2], [w1, w2], -178);
+% mag_at_pc = interp1([w1, w2], [m1, m2], phase_crossover_freq);
+% GM = 20 * log10(mag_at_pc);
 
 % Find the Closed Loop Bandwidth
 idx = find(20*log10(CL_mag) < 20*log10(CL_mag(1))-3, 1);  
