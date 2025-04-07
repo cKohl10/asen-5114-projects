@@ -36,17 +36,17 @@ function CL_bode_plot(Lg, save_location, prob_name)
 
     % Report crossover frequencies and margins
     if ~isempty(gain_crossover_ind)
-        idx = gain_crossover_ind(1);
+        idx = gain_crossover_ind(1); % Report based on the first crossing
         current_pm = 180 + phase_lg(idx);
-        fprintf('Phase Margin: %.2f deg\n', wout_lg(idx), current_pm);
+        fprintf('Phase Margin: %.2f deg (at %.3f rad/s)\n', current_pm, wout_lg(idx)); 
     else
         fprintf('No Gain Crossover Frequency found.\n');
     end
     
     if ~isempty(phase_crossover_ind)
-        idx = phase_crossover_ind(1);
+        idx = phase_crossover_ind(1); % Report based on the first crossing
         current_gm = -db(mag_lg(idx)); % GM in dB
-        fprintf('Gain Margin: %.2f dB\n', wout_lg(idx), current_gm);
+        fprintf('Gain Margin: %.2f dB (at %.3f rad/s)\n', current_gm, wout_lg(idx)); 
     else
         fprintf('No Phase Crossover Frequency found (Gain Margin is potentially Infinite).\n');
     end
@@ -59,6 +59,7 @@ function CL_bode_plot(Lg, save_location, prob_name)
     subplot(2,1,1)
     semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
     hold on;
+    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
     yline(-10, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
     if(~isempty(phase_crossover_ind))
         for i = 1:length(phase_crossover_ind)
@@ -104,6 +105,7 @@ function CL_bode_plot(Lg, save_location, prob_name)
     subplot(2,1,2)
     semilogx(wout_lg, phase_lg, 'linewidth', 2);
     hold on;
+    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
     for i = 1:length(gain_crossover_ind)
         % Plot green if good phase margin, otherwise red
         if phase_lg(gain_crossover_ind(i)) >= -140
@@ -155,6 +157,7 @@ function CL_bode_plot(Lg, save_location, prob_name)
     subplot(2,1,1)
     semilogx(wout_cl, db(mag_cl), 'color', 'g', 'linewidth', 2);
     hold on;
+    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
     bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
     yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
     title(prob_name + ' Magnitude');
@@ -168,6 +171,7 @@ function CL_bode_plot(Lg, save_location, prob_name)
     subplot(2,1,2)
     semilogx(wout_cl, phase_cl, 'color', 'g', 'linewidth', 2);
     hold on;
+    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
     % xline(2*pi, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
     title(prob_name + ' Phase');
     xlabel('Frequency (rad/s)');

@@ -8,6 +8,8 @@ function [Lg, C, plt_fig] = loopgain(G,s, params, K, plot_flag)
     if plot_flag
         plt_fig = figure();
         title('Compensators Bode Plot');
+    else
+        plt_fig = [];
     end
 
     for i = 1:length(C_set)
