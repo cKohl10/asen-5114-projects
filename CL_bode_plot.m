@@ -157,7 +157,7 @@ function CL_bode_plot(Lg, save_location, prob_name)
     subplot(2,1,1)
     semilogx(wout_cl, db(mag_cl), 'color', 'g', 'linewidth', 2);
     hold on;
-    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
+    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
     bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
     yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
     title(prob_name + ' Magnitude');

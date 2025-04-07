@@ -4,6 +4,8 @@ clc;
 clear;
 close all;
 
+fig_size = [100, 100, 800, 400];
+
 %% Plant
 % Define the analytical transfer function
 s = tf('s');
@@ -79,12 +81,6 @@ K = 44;
 params = {
     [2, 5, 0.02, omega_ar1, omega_ar1]; % anti-resonant notch
     [2, 0.05, 1.1, omega_r1, omega_r1]; % resonant notch
-    % [2, 2*0.035, 0.5*0.015, omega_r1, omega_ar1]; % pole cancelation
-    % [1, 7, 10]; % lead compensator
-    % [1, 1, 5]; % lead compensator
-    %[1, 8, 6]; % lag compensator
-    % [1, 40, 2]; % lag compensator
-    % [6, 2*pi]; % low pass filter
 };
 
 % Calculate Gain and Phase Margin 
@@ -98,7 +94,7 @@ phase_g = squeeze(phase_g);
 
 if plot_compensators
     figure(fig)
-    fig.Position = [100, 100, 1000, 800];
+    fig.Position = fig_size;
     subplot(2,1,1)
     semilogx(wout_g, db(mag_g), 'k--', 'linewidth', 2, 'DisplayName', 'Empirical');
     hold on;
@@ -194,13 +190,16 @@ params = {
     [1, 400, 10]; % lag compensator
 };
 
+params_6 = params;
+K6 = K;
+
 % Calculate Gain and Phase Margin 
-plot_compensators = false;
+plot_compensators = true;
 [~, C, fig] = loopgain(G, s, params, K, plot_compensators);
 
 if plot_compensators
     figure(fig)
-    fig.Position = [100, 100, 1000, 800];
+    fig.Position = fig_size;
     subplot(2,1,1)
     semilogx(freq_exp, db(mag_exp), 'k--', 'linewidth', 2, 'DisplayName', 'Empirical');
     hold on;
@@ -248,53 +247,91 @@ denC = denCA;
 
 % Step response
 out = sim('model_step', 'StopTime', '100');  % Set simulation time to 100 seconds
+out_unsaturated = sim('model_step_unsaturated', 'StopTime', '100');  % Set simulation time to 100 seconds
 % disp(pole(G))
 
-figure;
-plot(out.input.Time, out.input.Data, 'r--');
+step_plot = figure;
+step_plot.Position = fig_size;
+plot(out.input.Time, out.input.Data, 'r', 'LineWidth', 2, 'DisplayName', 'Reference Angle');
 hold on;
-plot(out.theta.Time, out.theta.Data);
+plot(out.theta.Time, out.theta.Data, 'b', 'LineWidth', 2, 'DisplayName', 'With Saturation');
+plot(out_unsaturated.theta.Time, out_unsaturated.theta.Data, 'b--', 'LineWidth', 1, 'DisplayName', 'Without Saturation');
 title('Step Response');
 xlabel('Time (s)');
 ylabel('Angle (deg)');
 grid on;
-saveas(gcf, 'figs/Problem5/step_response.png');
+saveas(step_plot, 'figs/Problem5/step_response.png');
+
+step_u_plot = figure;
+step_u_plot.Position = fig_size;
+plot(out.u.Time, out.u.Data, 'b', 'LineWidth', 2, 'DisplayName', 'With Saturation');
+hold on;
+plot(out_unsaturated.u.Time, out_unsaturated.u.Data, 'b--', 'LineWidth', 1, 'DisplayName', 'Without Saturation');
+title('Step Response Controller Output');
+xlabel('Time (s)');
+ylabel('Voltage (V)');
+grid on;
+legend('show');
+saveas(step_u_plot, 'figs/Problem5/step_u_response.png');
 
 % Sine response
 w_in_set = [0.5, 2]; % rad/s
 for i = 1:length(w_in_set)
     w_in = w_in_set(i);
     out(i) = sim('model_sine', 'StopTime', '100');  % Set simulation time to 100 seconds
+    out_unsaturated(i) = sim('model_sine_unsaturated', 'StopTime', '100');  % Set simulation time to 100 seconds
     % disp(pole(G))
 end
 
-figure;
+sine_plot = figure;
+sine_plot.Position = fig_size;
 for i = 1:length(w_in_set)
     subplot(length(w_in_set), 1, i);
-    plot(out(i).input.Time, out(i).input.Data, 'r--');
+    plot(out(i).input.Time, out(i).input.Data, 'r', 'LineWidth', 2, 'DisplayName', 'Reference Angle');
     hold on;
-    plot(out(i).theta.Time, out(i).theta.Data);
+    plot(out(i).theta.Time, out(i).theta.Data, 'b', 'LineWidth', 2, 'DisplayName', 'With Saturation');
+    plot(out_unsaturated(i).theta.Time, out_unsaturated(i).theta.Data, 'b--', 'LineWidth', 1, 'DisplayName', 'Without Saturation');
     title(sprintf('Sine Response - w_in = %g rad/s', w_in_set(i)));
     xlabel('Time (s)');
     ylabel('Angle (deg)');
     grid on;
+    legend('show');
 end
-saveas(gcf, 'figs/Problem5/sine_response.png');
+saveas(sine_plot, 'figs/Problem5/sine_response.png');
 
-figure;
+u_plot = figure;
+u_plot.Position = fig_size;
 for i = 1:length(w_in_set)
     subplot(length(w_in_set), 1, i);
-    plot(out(i).u.Time, out(i).u.Data, 'r');
+    plot(out(i).u.Time, out(i).u.Data, 'r', 'LineWidth', 2, 'DisplayName', 'With Saturation');
     hold on;
+    plot(out_unsaturated(i).u.Time, out_unsaturated(i).u.Data, 'r--', 'LineWidth', 1, 'DisplayName', 'Without Saturation');
     title(sprintf('Sine Response - w_in = %g rad/s', w_in_set(i)));
     xlabel('Time (s)');
-    ylabel('Torque input (Nm)');
+    ylabel('Voltage (V)');
     grid on;
+    legend('show');
 end
-saveas(gcf, 'figs/Problem5/u_sine_response.png');
+saveas(u_plot, 'figs/Problem5/u_sine_response.png');
 
 %%%%% Problem 6 %%%%%
-% prob6(C, s)
+disp('--- Problem 6 ---')
+% prob6(C, s, "figs/Problem6/");
+DC_gain = 10^(-15/20);
+pole_1 = 0.3;
+pole_2 = 0.4;
+omega_ar1 = 4.58;   % anti-resonance frequency
+omega_r1 = 2;    % resonance frequency
+zeta_z = 0.015;
+zeta_p = 0.035;
+G_resonance = (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2);
+G = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
+
+[Lg, C, ~] = loopgain(G, s, params_6, K6, false);
+
+CL_bode_plot(Lg, "figs/Problem6/", "Prob6");
+
+
 
 function plot_lg(figs, Lg_exp, transparency, first_plot)
 
@@ -384,8 +421,8 @@ function plot_lg(figs, Lg_exp, transparency, first_plot)
     subplot(2,1,1)
     semilogx(wout_cl, db(mag_cl), 'color', [transparency, 0, 0], 'linewidth', 2);
     hold on;
-    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
-    bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
+    xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
+    bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom', 'LabelHorizontalAlignment', 'left');
     yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
     title('Magnitude');
     xlabel('Frequency (rad/s)');
