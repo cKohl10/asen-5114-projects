@@ -17,7 +17,7 @@ G = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
 
 
 % Empirical Frequency Ranges
-data = readmatrix('data\Spacecraft_spin_module_frequency_response_data.xlsx');
+data = readmatrix('data/Spacecraft_spin_module_frequency_response_data.xlsx');
 freq_exp = data(:,1)*2*pi;
 w_min = min(freq_exp);
 % w_min = 0;

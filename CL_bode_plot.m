@@ -34,6 +34,24 @@ function CL_bode_plot(Lg, save_location, prob_name)
     % Gain Margin
     phase_crossover_ind = find(diff(sign(phase_lg + 180)) < 0 | diff(sign(phase_lg + 180)) == 2);
 
+    % Report crossover frequencies and margins
+    if ~isempty(gain_crossover_ind)
+        idx = gain_crossover_ind(1);
+        current_pm = 180 + phase_lg(idx);
+        fprintf('Phase Margin: %.2f deg\n', wout_lg(idx), current_pm);
+    else
+        fprintf('No Gain Crossover Frequency found.\n');
+    end
+    
+    if ~isempty(phase_crossover_ind)
+        idx = phase_crossover_ind(1);
+        current_gm = -db(mag_lg(idx)); % GM in dB
+        fprintf('Gain Margin: %.2f dB\n', wout_lg(idx), current_gm);
+    else
+        fprintf('No Phase Crossover Frequency found (Gain Margin is potentially Infinite).\n');
+    end
+    fprintf('Closed Loop Bandwidth: %.3f rad/s\n', closed_loop_bandwidth);
+
     %% Loop Gain Bode Plot
     % Plot the model bode plot
     figure;
@@ -52,6 +70,15 @@ function CL_bode_plot(Lg, save_location, prob_name)
         end
     end
     yline(0, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
+    
+    % Add scatter points for crossovers
+    if ~isempty(gain_crossover_ind)
+        scatter(wout_lg(gain_crossover_ind), zeros(size(gain_crossover_ind)), 60, 'm', 'filled', 'DisplayName', 'Gain Crossover');
+    end
+    if ~isempty(phase_crossover_ind)
+        scatter(wout_lg(phase_crossover_ind), db(mag_lg(phase_crossover_ind)), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
+    end
+
     title(prob_name + ' Magnitude');
     xlabel('Frequency (rad/s)');
     ylabel('Amplitude (dB)');
@@ -87,6 +114,15 @@ function CL_bode_plot(Lg, save_location, prob_name)
     end
     yline(-180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
     yline(-140, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
+
+    % Add scatter points for crossovers
+    if ~isempty(gain_crossover_ind)
+        scatter(wout_lg(gain_crossover_ind), phase_lg(gain_crossover_ind), 60, 'm', 'filled', 'DisplayName', 'Gain Crossover');
+    end
+    if ~isempty(phase_crossover_ind)
+        scatter(wout_lg(phase_crossover_ind), -180*ones(size(phase_crossover_ind)), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
+    end
+
     title(prob_name + ' Phase');
     xlabel('Frequency (rad/s)');
     ylabel('Phase (deg)');

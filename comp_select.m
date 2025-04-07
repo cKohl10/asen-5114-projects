@@ -5,7 +5,8 @@ function C = comp_select(params, s)
     % type = 3: Proportional Gain
     % type = 4: Integral Gain
     % type = 5: Derivative Gain
-
+    % type = 6: Low Pass Filter
+    % type = 7: High Pass Filter
 
     C = 1;
     type = params(1);
@@ -40,5 +41,13 @@ function C = comp_select(params, s)
         % Derivative Gain
         K = params(1);
         C = K * s;
+    elseif type == 6
+        % Low Pass Filter
+        a = params(1);
+        C = 1 / (s/a + 1);
+    elseif type == 7
+        % High Pass Filter
+        a = params(1);
+        C = s / (s/a + 1);
     end
 end

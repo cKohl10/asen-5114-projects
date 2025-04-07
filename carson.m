@@ -10,7 +10,7 @@ s = tf('s');
 DC_gain = 10^(-15/20);
 pole_1 = 0.3;
 pole_2 = 0.4;
-omega_ar1 = 4.601;   % anti-resonance frequency
+omega_ar1 = 4.58;   % anti-resonance frequency
 omega_r1 = 8.347;    % resonance frequency
 zeta_z = 0.015;
 zeta_p = 0.035;
@@ -77,7 +77,8 @@ params = {
 };
 
 % Calculate Gain and Phase Margin 
-[Lg, C] = loopgain(G, s, params, K);
+plot_compensators = false;
+[Lg, C] = loopgain(G, s, params, K, plot_compensators);
 
 [GM,PM] = margin(Lg); 
 GM = 20*log10(GM);
@@ -117,18 +118,44 @@ disp('--- Problem 4 ---')
 % type = 4: Integral Gain
 % type = 5: Derivative Gain
 
-K = 25;
+K = 35;
 params = {
-    %[2, 0.4, 0.015, omega_ar1, omega_ar1]; % anti-resonant notch
-    %[2, 0.035, 0.6, omega_r1, omega_r1]; % resonant notch
-    [2, 2*0.035, 0.5*0.015, omega_r1, omega_ar1]; % pole cancelation
-    [1, 1, 10]; % lead compensator
-    %[1, 1, 10]; % lead compensator
-    %[1, 0.3, 3]; % lag compensator
+    [2, 5, 0.02, omega_ar1, omega_ar1]; % anti-resonant notch
+    [2, 0.1, 1.1, omega_r1, omega_r1]; % resonant notch
+    % [2, 2*0.035, 0.5*0.015, omega_r1, omega_ar1]; % pole cancelation
+    [1, 7, 10]; % lead compensator
+    [1, 1, 5]; % lead compensator
+    %[1, 8, 6]; % lag compensator
+    [1, 40, 2]; % lag compensator
+    % [6, 2*pi]; % low pass filter
 };
 
 % Calculate Gain and Phase Margin 
-[~, C] = loopgain(G, s, params, K);
+plot_compensators = true;
+[~, C, fig] = loopgain(G, s, params, K, plot_compensators);
+
+figure(fig)
+fig.Position = [100, 100, 1000, 800];
+subplot(2,1,1)
+semilogx(freq_exp, db(mag_exp), 'k--', 'linewidth', 2, 'DisplayName', 'Empirical');
+hold on;
+title('Magnitude');
+xlabel('Frequency (rad/s)');
+ylabel('Amplitude (dB)');
+xlim([freq_exp(1), freq_exp(end)]);
+grid on;
+legend('show');
+
+% Plot the phase plot
+subplot(2,1,2)
+semilogx(freq_exp, rad2deg(phase_exp), 'k--', 'linewidth', 2, 'DisplayName', 'Empirical');
+hold on;
+title('Phase');
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+xlim([freq_exp(1), freq_exp(end)]);
+grid on;
+legend('show');
 
 [c_mag, c_phase, c_wout] = bode(C, freq_exp);
 c_mag = squeeze(c_mag);
@@ -143,115 +170,6 @@ Lg_exp.cl_phase = Lg_exp.lg_phase - rad2deg(1./(1+Lg_exp.lg_mag));
 Lg_exp.cl_wout = Lg_exp.lg_wout;
 
 CL_bode_plot(Lg_exp, "figs/Problem4/", "Prob4");
-
-% % Find zero crossings on the bode plot with linear interpolation
-% zero_crossings = [];
-% for i = 1:length(cg_mag)-1
-%     if (cg_mag(i) - 1) * (cg_mag(i+1) - 1) <= 0 % Check if there is a sign change
-%         % Linear interpolation between points
-%         x1 = freq(i);
-%         x2 = freq(i+1);
-%         y1 = cg_mag(i) - 1;
-%         y2 = cg_mag(i+1) - 1;
-        
-%         % Calculate exact crossing point
-%         crossover_freq = x1 - y1*(x2 - x1)/(y2 - y1);
-%         zero_crossings = [zero_crossings, crossover_freq];
-%     end
-% end
-
-% disp('Zero crossing frequencies (Hz):');
-% disp(zero_crossings);
-
-% % Get the phase margin and gain margin at the zero crossings
-% if ~isempty(zero_crossings)
-%     for i = 1:length(zero_crossings)
-%         % Get the closest phase value in the fitted plot to the zero crossing frequency
-%         [~, idx] = min(abs(freq - zero_crossings(i)));
-%         zc_phase(i) = cg_phase(idx);
-%         pm(i) = zc_phase(i) + 180;
-%     end
-%     disp('Phase margin at zero crossings (deg):');
-%     disp(pm);
-% else 
-%     disp('No zero crossings found');
-%     pm = NaN;
-% end
-
-% % Find -180 degree crossings with linear interpolation
-% phase_180_crossings = [];
-% for i = 1:length(cg_phase)-1
-%     if (cg_phase(i) + 180) * (cg_phase(i+1) + 180) <= 0 % Check if there is a sign change around -180
-%         % Linear interpolation between points
-%         x1 = freq(i);
-%         x2 = freq(i+1);
-%         y1 = cg_phase(i) + 180;
-%         y2 = cg_phase(i+1) + 180;
-        
-%         % Calculate exact crossing point
-%         crossover_freq = x1 - y1*(x2 - x1)/(y2 - y1);
-%         phase_180_crossings = [phase_180_crossings, crossover_freq];
-%     end
-% end
-
-% if isempty(phase_180_crossings)
-%     disp('Infinite gain margin');
-%     gm = NaN;
-% else
-%     % Calculate gain margins at each -180 degree crossing
-%     for i = 1:length(phase_180_crossings)
-%         [~, idx] = min(abs(freq - phase_180_crossings(i)));
-%         gm(i) = -db(cg_mag(idx));  % Gain margin in dB
-%     end
-%     disp('Gain margins (dB):');
-%     disp(gm);
-% end
-
-% % Find -3dB crossing (bandwidth)
-% bandwidth_idx = find(db(cg_mag) <= -3, 1, 'first');
-% if ~isempty(bandwidth_idx)
-%     bandwidth_freq = freq(bandwidth_idx);
-%     disp(['Bandwidth = ', num2str(bandwidth_freq), ' Hz']);
-% end
-
-% % Plot the bode plot
-% f_bode_4 = figure();
-% f_bode_4.Position = [100, 100, 800, 600];
-% semilogx(freq, db(mag_PE), 'r');
-% hold on;
-% semilogx(c_wout, db(c_mag), 'b--');
-% semilogx(cg_wout, db(cg_mag), 'g');
-% if ~isempty(phase_180_crossings)
-%     scatter(phase_180_crossings, -gm, 'r', 'o');
-% end
-% yline(0, 'k--');
-% for i = 1:length(zero_crossings)
-%     xline(zero_crossings(i), 'k--');
-% end
-% grid on;
-% ylabel('Magnitude (dB)');
-% xlabel('Frequency (Hz)');
-% title('Problem 4 Bode Plot');
-% legend('P(s)', 'C(s)', 'C(s)*P(s)', 'Gain Margin Points', 'Location', 'eastoutside');
-% saveas(gcf, 'figs/bode_plot.png');
-
-% % Plot the phase plot
-% f_phase_4 = figure();
-% f_phase_4.Position = f_bode_4.Position;
-% semilogx(freq, rad2deg(phase_PE), 'r');
-% hold on;
-% semilogx(c_wout, c_phase, 'b--');
-% semilogx(cg_wout, cg_phase, 'g');
-% % if ~isempty(zero_crossings)
-% %     scatter(zero_crossings, zc_phase, 'r', 'o');
-% % end
-% yline(-180, 'k--');
-% ylabel('Phase (deg)');
-% xlabel('Frequency (Hz)');
-% title('Problem 4 Phase Plot');
-% legend('P(s)', 'C(s)', 'C(s)*P(s)', 'Phase Margin Points', 'Location', 'eastoutside');
-% grid on;
-% saveas(gcf, 'figs/phase_plot.png');
 
 numCE = C.Numerator{1};
 denCE = C.Denominator{1};
@@ -310,4 +228,4 @@ end
 saveas(gcf, 'figs/Problem5/u_sine_response.png');
 
 %%%%% Problem 6 %%%%%
-prob6(C, s)
+% prob6(C, s)
