@@ -34,71 +34,20 @@ mag = squeeze(mag);
 OLPoles = pole(G);
 OLZeros = zero(G);
 
-% Plot the bode plot
-% figure;
-% semilogx(freq, amp_db_P);
-% hold on;
-% semilogx(wout, db(mag), 'r');
-% title('Bode Plot');
-% xlabel('Frequency (Hz)');
-% ylabel('Amplitude (dB)');
-% xlim([freq(1), freq(end)]);
-% legend('Empirical', 'Analytical');
-% grid on;
-% % saveas(gcf, 'figs/bode_plot.png');
-% 
-% % Plot the phase plot
-% figure;
-% semilogx(freq, rad2deg(phase_P));
-% hold on;
-% semilogx(freq, phase, 'color', 'r');
-% title('Phase Plot');
-% xlabel('Frequency (rad/s)');
-% ylabel('Phase (deg)');
-% xlim([freq(1), freq(end)]);
-% grid on;
-% legend('Experimental', 'Analytical');
-% % saveas(gcf, 'figs/phase_plot.png');
-
-
-% %%%%% Problem 2 %%%%%
-% Simple controller - plot all K values on one Nyquist plot
-% K = [-1000, -100, -10, -1, -0.1 ,0.1, 1, 10, 100, 1000];
-% figure;
-% hold on;
-% legendEntries = cell(1, length(K));
-% 
-% for i = 1:length(K)
-%     C = K(i);
-%     nyquist(C*G);
-%     legendEntries{i} = sprintf('K = %g', K(i));
-% end
-% 
-% title('Nyquist Plot - Multiple Gain Values');
-% xlabel('Real Axis');
-% ylabel('Imaginary Axis');
-% legend(legendEntries);
-% grid on;
-% 
-% 
-% % Simple controller - plot all K values on one Bode plot
-% figure;
-% hold on;
-% legendEntries = cell(1, length(K));
-% 
-% for i = 1:length(K)  
-%     C = K(i);
-%     clSys = feedback(C*G, 1);  % closed-loop transfer function
-%     polesCL(:,i) = pole(clSys);
-%     bode(C*G);
-%     legendEntries{i} = sprintf('K = %g', K(i));
-% end
-% 
-% title('Bode Plot - Multiple Gain Values');
-% legend(legendEntries);
-% grid on;
-% % saveas(gcf, 'figs/nyquist_plot_combined.png');
-% 
+% Bode Plot of the Open Loop
+figure;
+subplot(2,1,1)
+semilogx(freq, amp_db_P, 'LineWidth', 1.5);
+xlabel('Frequency (rad/s)');
+ylabel('|-Lg(j\omega)| (dB)');
+title('Magnitutde of the Empirical Open-Loop');
+grid on;
+subplot(2,1,2)
+semilogx(freq, phase_P, 'LineWidth', 1.5);
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+title('Phase of Empirical Open-Loop Response');
+grid on;
 
 %%%%% Problem 3 %%%%%
 % Design a compensator to meet the following design requirements:
@@ -106,38 +55,33 @@ OLZeros = zero(G);
 % Gain margin > 10 dB
 % CL Bandwidth ~ 1 Hz
 
-% Define Compensator Properties
-z1 = 0.3;
-p1 = 20;
-z2 = 0.4;   
-p2 = 20; 
+% Define Compensator
+% Pole Cancellation: Cancel out the zero and pole with "approximate" cancellation
+zeta_r = 2*0.035;
+zeta_ar = 0.5*0.015;
+pole_cancel = (s^2 + 2*zeta_r*omega_r1*s + omega_r1^2) / (s^2 + 2*zeta_ar*omega_ar1*s + omega_ar1^2);
 
-% Compensator Gain (Tuned for Stability)
-K = 10;
-zeta_z = 0.02;
-% zeta_p = 0.6;
+% Proportional Gain
+K = 25;
 
-% Combined Notch Filter to Damp Resonance and Anti-Resonance
-notch = (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
+% Lead compensator
+a1 = 1;
+b1 = 10;
+C1 = b1 / a1 * (s + a1) / (s + b1);
 
-lag = 1/(s/3*pi+1);
+% Total Compensator
+C = K*C1*pole_cancel;
 
-lead = (s/z1+1)/(s/p1+1);
-
-lead2 = (s/z2+1)/(s/p2+1);
-
-lead2 = (s/2*pi+1)/(s/2.5*pi+1);
-
-C = K * notch * lead * lead2 * lag;
+% Negative Loop Gain
+Lg = C*G;
 
 % Calculate Gain and Phase Margin 
-Lg = -C*G;
-[GM,PM] = margin(-Lg); 
+[GM,PM] = margin(Lg); 
 GM = 20*log10(GM);
 Margin = [GM,PM]';
 
 % Determine Closed Loop Poles and Zeros
-clSys = feedback(-Lg, 1);  
+clSys = feedback(Lg, 1);  
 CLPoles = pole(clSys);
 CLZeros = zero(clSys);
 bw = bandwidth(clSys);
@@ -145,7 +89,7 @@ bw = bandwidth(clSys);
 % Evaluate Tracking 
 w = logspace(-1, 2.5, 1000);  
 for i  = 1:length(w)
-    Lg_eval(i) = evalfr(Lg, w(i));
+    Lg_eval(i) = evalfr(-Lg, w(i));
     Ts_eval(i) = 1/abs(1-Lg_eval(i)); 
 end
 
@@ -155,63 +99,169 @@ disp(['Phase Margin: ', num2str(PM), 'deg']);
 disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
 
 % Create a Bode Plot for Loop Gain
+% figure;
+% hold on;
+% bode(Lg);
+% title('Loop Gain Bode Plot with Compensator');
+% grid on;
+% % saveas(gcf, 'figs/P3_BodePlot.png');
+% 
+% % % Create Bode plot of compesators and LG
+% % w = logspace(-1, 2, 1000);  % 0.1 to 100 rad/s
+% % figure;
+% % bode(C, w); 
+% % hold on;
+% % bode(Lg,w)
+% % bode(G,w)
+% % legend('C','LG','Plant');
+% % title('Bode Plots of Compensator, LG, Plant');
+% % grid on;
+% 
+% 
+% % Create a Bode Plot for Loop Gain
+% figure;
+% hold on;
+% bode(clSys);
+% title('Closed Loop Bode Plot with Compensator');
+% grid on;
+% % saveas(gcf, 'figs/P3_BodePlot.png');
+% 
+% % Create a Nyquist Plot
+% figure;
+% hold on;
+% nyquist(Lg);
+% title('Loop Gain Nyquist Plot')
+% grid on;
+% 
+% % Plot Poles and Zeros 
+% figure;
+% hold on;
+% plot(real(CLZeros), imag(CLZeros), 'ro', 'MarkerSize', 8);
+% plot(real(CLPoles), imag(CLPoles), 'rx', 'MarkerSize', 10);
+% plot(real(OLZeros), imag(OLZeros), 'bo', 'MarkerSize', 8);
+% plot(real(OLPoles), imag(OLPoles), 'bx', 'MarkerSize', 10);
+% 
+% xlabel('Real Axis');
+% ylabel('Imaginary Axis');
+% title('Pole-Zero Plot');
+% grid on;
+% axis equal; 
+% legend('Closed Loop Zeros', 'Closed Loop Poles','Open Loop Zero','Open Loop Poles');
+% hold off; 
+% 
+% 
+% % Plot Tracking Error
+% figure;
+% semilogx(w, Ts_eval*100, 'LineWidth', 1.5);
+% xlabel('Frequency (rad/s)');
+% ylabel('Tracking Error (%)');
+% title('Closed-Loop Tracking Error vs Frequency');
+% grid on;
+% % yline(5, '--r', '5% Error Threshold');
+% ylim([0 100]);
+
+
+%% Problem 4: Emperical Compensator
+% Define Compensator
+% Pole Cancellation: Cancel out the zero and pole with "approximate" cancellation
+zeta_r = 1*0.035;
+zeta_ar = 2*0.015;
+omega_ar1 = 4.601;
+omega_r1 = 8.34;
+pole_cancel = 1 / (s^2 + 2*zeta_ar*omega_ar1*s + omega_ar1^2);
+
+% Proportional Gain
+K = 100;
+
+% Lead compensator
+a1 = 0.4;
+b1 = 1;
+C1 = b1 / a1 * (s + a1) / (s + b1);
+
+% Total Compensator
+C = K*C1*pole_cancel;
+
+% Evaluate the Compensator over Emperical Frequency Sweep 
+C_eval = zeros(size(freq));
+for i = 1:length(freq)
+    C_eval(i) = evalfr(C, 1j * freq(i)); 
+end
+
+% Define Open Loop Magnitutde
+OL_amp = exp(amp_db_P/20);
+OL_mag = abs(OL_amp);
+
+% Evalutate Loop Gain Magnitutde and Phase
+Lg_Emperical = C_eval.*OL_mag;
+Lg_mag = abs(Lg_Emperical);
+Lg_phase = rad2deg(angle(Lg_Emperical));
+
+% Evaluate Closed Loop Magnitutde and Phase
+CL_Emperical = Lg_Emperical./(1+Lg_Emperical);
+CL_mag = abs(CL_Emperical);
+CL_phase = rad2deg(angle(CL_Emperical));
+
+% Find Phase Margin
+gain_crossing_idx = find(diff(sign(Lg_mag - 1)) ~= 0);
+idx = gain_crossing_idx(1);
+w1 = freq(idx);
+w2 = freq(idx+1);
+m1 = Lg_mag(idx);
+m2 = Lg_mag(idx+1);
+p1 = Lg_phase(idx);
+p2 = Lg_phase(idx+1);
+gain_crossover_freq = interp1([m1, m2], [w1, w2], 1);
+phase_at_gc = interp1([w1, w2], [p1, p2], gain_crossover_freq);
+PM = 180 + phase_at_gc;
+
+% Find the Gain Margin (RN it is INF)
+crossing_idx = find(Lg_phase <= -177); 
+idx = crossing_idx(1); 
+w1 = freq(idx-1);
+w2 = freq(idx+1);
+p1 = Lg_phase(idx-1);
+p2 = Lg_phase(idx+1);
+m1 = (Lg_mag(idx-1));
+m2 = (Lg_mag(idx+1));
+phase_crossover_freq = interp1([p1, p2], [w1, w2], -177);
+mag_at_pc = interp1([w1, w2], [m1, m2], phase_crossover_freq);
+GM = 20 * log10(mag_at_pc);
+
+% Find the Closed Loop Bandwidth
+idx = find(20*log10(CL_mag) < 20*log10(CL_mag(1))-3, 1);  
+bw = freq(idx);
+
+% Display Margins and CL Bandwidth
+disp(['Gain Margin: ', num2str(GM), ' dB']);
+disp(['Emperical Phase Margin: ', num2str(PM), ' deg']);
+disp(['Empirical Closed-Loop Bandwidth: ', num2str(bw), ' rad/s']);
+
+% Plot the Bode of the Loop Gain
 figure;
-hold on;
-bode(-Lg);
-title('Loop Gain Bode Plot with Compensator');
-grid on;
-% saveas(gcf, 'figs/P3_BodePlot.png');
-
-% Create Bode plot of compesators and LG
-w = logspace(-1, 2, 1000);  % 0.1 to 100 rad/s
-figure;
-bode(C, w); 
-hold on;
-bode(-Lg,w)
-bode(G,w)
-legend('C','LG','Plant');
-title('Bode Plots of Compensator, LG, Plant');
-grid on;
-
-
-% Create a Bode Plot for Loop Gain
-figure;
-hold on;
-bode(clSys);
-title('Closed Loop Bode Plot with Compensator');
-grid on;
-% saveas(gcf, 'figs/P3_BodePlot.png');
-
-% Create a Nyquist Plot
-figure;
-hold on;
-nyquist(-Lg);
-title('Loop Gain Nyquist Plot')
-grid on;
-
-% Plot Poles and Zeros 
-figure;
-hold on;
-plot(real(CLZeros), imag(CLZeros), 'ro', 'MarkerSize', 8);
-plot(real(CLPoles), imag(CLPoles), 'rx', 'MarkerSize', 10);
-plot(real(OLZeros), imag(OLZeros), 'bo', 'MarkerSize', 8);
-plot(real(OLPoles), imag(OLPoles), 'bx', 'MarkerSize', 10);
-
-xlabel('Real Axis');
-ylabel('Imaginary Axis');
-title('Pole-Zero Plot');
-grid on;
-axis equal; 
-legend('Closed Loop Zeros', 'Closed Loop Poles','Open Loop Zero','Open Loop Poles');
-hold off; 
-
-
-% Plot Tracking Error
-figure;
-semilogx(w, Ts_eval*100, 'LineWidth', 1.5);
+subplot(2,1,1)
+semilogx(freq, 20*log10(Lg_mag), 'LineWidth', 1.5);
 xlabel('Frequency (rad/s)');
-ylabel('Tracking Error (%)');
-title('Closed-Loop Tracking Error vs Frequency');
+ylabel('|-Lg(j\omega)| (dB)');
+title('Magnitutde of the Empirical Loop-Gain');
 grid on;
-% yline(5, '--r', '5% Error Threshold');
-ylim([0 100]);
+subplot(2,1,2)
+semilogx(freq, Lg_phase, 'LineWidth', 1.5);
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+title('Phase of Empirical Loop-Gain Response');
+grid on;
+
+% Plot the Bode of the Closed Loop
+figure;
+subplot(2,1,1)
+semilogx(freq, 20*log10(CL_mag), 'LineWidth', 1.5);
+xlabel('Frequency (rad/s)');
+ylabel('|T(j\omega)| (dB)');
+title('Magnitutde of the Empirical Closed-Loop');
+grid on;
+subplot(2,1,2)
+semilogx(freq, CL_phase, 'LineWidth', 1.5);
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+title('Phase of the Empirical Closed-Loop Response');
+grid on;
