@@ -33,12 +33,6 @@ zeta_d = 0.015;
 % Notch Filter Transfer Function
 notch_filter_ar = (s^2 + 2*zeta_n*w_n*s + w_n^2) / (s^2 + 2*zeta_d*w_d*s + w_d^2);
 
-% Visualize the notch
-figure();
-bode(notch_filter_ar);
-[mag_n, phase_n, wout_n] = bode(Lg);
-phase_n = squeeze(phase_n);
-mag_n = squeeze(mag_n);
 
 %%%% Notch Filter to cancel out resonance
 w_n = omega_r1;
@@ -50,37 +44,49 @@ zeta_d = 0.035;
 notch_filter_r = (s^2 + 2*zeta_d*w_d*s + w_d^2) / (s^2 + 2*zeta_n*w_n*s + w_n^2);
 
 %%%% Pole Cancellation
-% Cancel out the zero causing the anti-resonance
-pole_cancel = 1 / (s^2 + 2*zeta_d*w_d*s + w_d^2);
+% Cancel out the zero and pole with "approximate" cancellation
+zeta_r = 2*0.035;
+zeta_ar = 0.5*0.015;
+pole_cancel = (s^2 + 2*zeta_r*omega_r1*s + omega_r1^2) / (s^2 + 2*zeta_ar*omega_ar1*s + omega_ar1^2);
 
-% Note: Try to achieve control objectives without using a notch filter to
-% damp out the anti-resonance first (i.e. just use lead and constant gain)
+% Visulize the cancellation
+[mag_n, phase_n, wout_n] = bode(pole_cancel);
+phase_n = squeeze(phase_n);
+mag_n = squeeze(mag_n);
 
 % Proportional Gain
-K = 150;
+K = 25;
 
 %%%% Lead compensator
-a1 = 7;
-b1 = 13;
+a1 = 1;
+b1 = 10;
 C1 = b1 / a1 * (s + a1) / (s + b1);
 
+% Bode of lead
+[mag_lead, phase_lead, wout_lead] = bode(C1);
+phase_lead = squeeze(phase_lead);
+mag_lead = squeeze(mag_lead);
+
 % Second Compensator
-a2 = 2;
-b2 = 20;
+a2 = 1;
+b2 = 10;
 C2 = b2 / a2 * (s + a2) / (s + b2);
 
-% Third Compensator
-a3 = 10;
-b3 = 20;
+% Third Compensator (Lag)
+% a3 = 20;
+% b3 = 4;
+% C3 = b3 / a3 * (s + a3) / (s + b3);
+a3 = 0.3;
+b3 = 3;
 C3 = b3 / a3 * (s + a3) / (s + b3);
 
-% Controller
-C1 = 1;
+%Controller
+% C1 = 1;
 C2 = 1;
 C3 = 1;
 notch_filter_ar = 1;
 notch_filter_r = 1;
-pole_cancel = 1;
+%pole_cancel = 1;
 % K = 1;
 C = K*C1*C2*C3*notch_filter_ar*notch_filter_r*pole_cancel;
 
@@ -115,12 +121,13 @@ set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
 subplot(2,1,1)
 semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
 hold on;
+yline(-10, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
 if(~isempty(phase_crossover_ind))
     for i = 1:length(phase_crossover_ind)
-        if abs(db(mag_lg(phase_crossover_ind(i)))) > 10
-            line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'g', 'LineWidth', 1.5);
+        if db(mag_lg(phase_crossover_ind(i))) < -10
+            good_gain = line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'g', 'LineWidth', 1.5);
         else
-            line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'r', 'LineWidth', 1.5);
+            bad_gain = line([wout_lg(phase_crossover_ind(i)), wout_lg(phase_crossover_ind(i))], [0, db(mag_lg(phase_crossover_ind(i)))], 'Color', 'r', 'LineWidth', 1.5);
         end
     end
 end
@@ -130,6 +137,21 @@ xlabel('Frequency (rad/s)');
 ylabel('Amplitude (dB)');
 xlim([wout_lg(1), wout_lg(end)]);
 grid on;
+
+% Add legend
+try
+    legend([good_gain, bad_gain], 'Good Gain Margin', 'Bad Gain Margin', 'location' ,'best');
+catch
+    try 
+        legend([good_gain], 'Good Gain Margin', 'location' ,'best');
+    catch
+        try
+            legend([bad_gain], 'Bad Gain Margin', 'location' ,'best');
+        catch
+            x = 1;
+        end
+    end
+end
 
 % Plot the phase plot
 subplot(2,1,2)
@@ -202,3 +224,74 @@ figure();
 nyquist(Lg, {w_min, w_max});
 axis equal;
 
+
+%% Notch Filter Plot
+figure;
+set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
+subplot(2,1,1)
+semilogx(wout_n, db(mag_n), 'b', 'linewidth', 2);
+hold on;
+title('Magnitude');
+xlabel('Frequency (rad/s)');
+ylabel('Amplitude (dB)');
+xlim([wout_n(1), wout_n(end)]);
+grid on;
+
+% Plot the phase plot
+subplot(2,1,2)
+semilogx(wout_n, phase_n, 'b', 'linewidth', 2);
+hold on;
+title('Phase');
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+xlim([wout_n(1), wout_n(end)]);
+sgtitle('Pole Zero Cancellation Compensator Bode Plot')
+grid on;
+
+
+%% Lead Plot
+% Just the lead compensator Bode plot
+figure;
+set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
+subplot(2,1,1)
+semilogx(wout_lead, db(mag_lead), 'b', 'linewidth', 2);
+hold on;
+title('Magnitude');
+xlabel('Frequency (rad/s)');
+ylabel('Amplitude (dB)');
+xlim([wout_lead(1), wout_lead(end)]);
+grid on;
+
+% Plot the phase plot
+subplot(2,1,2)
+semilogx(wout_lead, phase_lead, 'b', 'linewidth', 2);
+hold on;
+title('Phase');
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+xlim([wout_lead(1), wout_lead(end)]);
+sgtitle('Lead Compensator Bode Plot')
+grid on;
+
+[GM,PM] = margin(Lg); 
+GM = 20*log10(GM);
+Margin = [GM,PM]';
+
+% Determine Closed Loop Poles and Zeros
+clSys = feedback(Lg, 1);  
+CLPoles = pole(clSys);
+CLZeros = zero(clSys);
+bw = bandwidth(clSys);
+
+% Evaluate Tracking 
+w = logspace(-1, 2.5, 1000);  
+for i  = 1:length(w)
+    Lg_eval(i) = evalfr(Lg, w(i));
+    Ts_eval(i) = 1/abs(1-Lg_eval(i)); 
+end
+
+% Display the margins and bandwidth 
+disp(' --- Problem 3 --- ')
+disp(['Gain Margin: ', num2str(GM), 'dB']);
+disp(['Phase Margin: ', num2str(PM), 'deg']);
+disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
