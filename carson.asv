@@ -299,18 +299,16 @@ p2 = Lg_exp.lg_phase(idx+1);
 gain_crossover_freq = interp1([m1, m2], [w1, w2], 1);
 phase_at_gc = interp1([w1, w2], [p1, p2], gain_crossover_freq);
 PM = 180 + phase_at_gc;
-phase_plot = PM-180;
-PM = [cosd(phase_plot),sind(phase_plot)];
 
 % Find the Gain Margin (RN it is INF)
 crossing_idx = find(Lg_exp.lg_phase <= -177); 
 idx = crossing_idx(1); 
 w1 = freq_exp(idx-1);
 w2 = freq_exp(idx+1);
-p1 = Lg_exp.lg_phase(idx-1);
-p2 = Lg_exp.lg_phase(idx+1);
-m1 = (Lg_exp.lg_mag(idx-1));
-m2 = (Lg_exp.lg_mag(idx+1));
+p1 = Lg_phase(idx-1);
+p2 = Lg_phase(idx+1);
+m1 = (Lg_mag(idx-1));
+m2 = (Lg_mag(idx+1));
 phase_crossover_freq = interp1([p1, p2], [w1, w2], -177);
 mag_at_pc = interp1([w1, w2], [m1, m2], phase_crossover_freq);
 GM = 20 * log10(mag_at_pc);
@@ -324,7 +322,10 @@ plot(real(L_complex), imag(L_complex), 'b-', 'LineWidth', 2);
 hold on;
 plot(real(L_complex), -imag(L_complex), 'b-', 'LineWidth', 2); 
 plot(-1, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
-text(-1.4, 0.1, 'Crit Point', 'Color', 'r', 'FontSize', 12);
+text(-2.4, 0.1, 'Crit Point', 'Color', 'r', 'FontSize', 12);
+% Critical point
+plot(-1, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+text(-1.5, 0, 'Crit Pt', 'FontSize', 12, 'Color', 'r');
 
 % Plot phase margin point (gain = 1 crossover)
 if exist('PM', 'var')
@@ -334,15 +335,9 @@ end
 
 % Plot gain margin point (phase = -180 crossover)
 if exist('GM', 'var')
-    plot(1/GM, 0, 'mo', 'MarkerSize', 8, 'LineWidth', 2);
-    text(0.3, 0, '1/GM', 'Color', 'm', 'FontSize', 12);
+    plot(-1/GM, 0, 'mo', 'MarkerSize', 8, 'LineWidth', 2);
+    text(-1/GM, 0.1, '1/GM', 'Color', 'm', 'FontSize', 12);
 end
-
-theta = linspace(0, 2*pi, 500);
-x_unit = cos(theta);
-y_unit = sin(theta);
-
-plot(x_unit, y_unit, 'k--', 'LineWidth', 1.5);  
 xlabel('Real Axis', 'FontSize', 14);
 ylabel('Imaginary Axis', 'FontSize', 14);
 title('Empirical Loop Gain Nyquist Plot', 'FontSize', 16);
