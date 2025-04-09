@@ -237,15 +237,85 @@ disp(['Emperical Phase Margin: ', num2str(PM), ' deg']);
 disp(['Empirical Closed-Loop Bandwidth: ', num2str(bw), ' rad/s']);
 
 % Plot the Bode of the Loop Gain
+% figure;
+% subplot(2,1,1)
+% semilogx(freq, 20*log10(Lg_mag), 'LineWidth', 1.5);
+% xlabel('Frequency (rad/s)');
+% ylabel('|-Lg(j\omega)| (dB)');
+% title('Magnitutde of the Empirical Loop-Gain');
+% grid on;
+% subplot(2,1,2)
+% semilogx(freq, Lg_phase, 'LineWidth', 1.5);
+% xlabel('Frequency (rad/s)');
+% ylabel('Phase (deg)');
+% title('Phase of Empirical Loop-Gain Response');
+% grid on;
+% 
+% % Plot the Bode of the Closed Loop
+% figure;
+% subplot(2,1,1)
+% semilogx(freq, 20*log10(CL_mag), 'LineWidth', 1.5);
+% xlabel('Frequency (rad/s)');
+% ylabel('|T(j\omega)| (dB)');
+% title('Magnitutde of the Empirical Closed-Loop');
+% grid on;
+% subplot(2,1,2)
+% semilogx(freq, CL_phase, 'LineWidth', 1.5);
+% xlabel('Frequency (rad/s)');
+% ylabel('Phase (deg)');
+% title('Phase of the Empirical Closed-Loop Response');
+% grid on;
+
+%% Problem 6 
+DC_gain = 10^(-15/20);
+pole_1 = 0.3;
+pole_2 = 0.4;
+omega_ar1 = 8.347;   % anti-resonance frequency
+omega_r1 = 4.58;    % resonance frequency
+zeta_z = 0.015;
+zeta_p = 0.035;
+G_resonance = (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2);
+G = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
+
+% Define Compensator
+C_res = (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2)/(s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2);
+% Negative Loop Gain
+Lg = C*G;
+
+% Calculate Gain and Phase Margin 
+[GM,PM] = margin(Lg); 
+GM = 20*log10(GM);
+Margin = [GM,PM]';
+
+% Determine Closed Loop Poles and Zeros
+clSys = feedback(Lg, 1);  
+CLPoles = pole(clSys);
+CLZeros = zero(clSys);
+bw = bandwidth(clSys);
+
+% Get LG and CL Response
+[Lg_mag,Lg_phase,wout] = bode(Lg);
+Lg_mag = squeeze(Lg_mag);
+Lg_phase = squeeze(Lg_phase);
+
+[Cl_mag,Cl_phase,wout_cl] = bode(clSys);
+Cl_mag = squeeze(Cl_mag);
+Cl_phase = squeeze(Cl_phase);
+
+% Display Margin
+disp(['Gain Margin: ', num2str(GM), ' dB']);
+disp(['Emperical Phase Margin: ', num2str(PM), ' deg']);
+
+% Plot the Bode of the Loop Gain
 figure;
 subplot(2,1,1)
-semilogx(freq, 20*log10(Lg_mag), 'LineWidth', 1.5);
+semilogx(wout, 20*log10(Lg_mag), 'LineWidth', 1.5);
 xlabel('Frequency (rad/s)');
 ylabel('|-Lg(j\omega)| (dB)');
 title('Magnitutde of the Empirical Loop-Gain');
 grid on;
 subplot(2,1,2)
-semilogx(freq, Lg_phase, 'LineWidth', 1.5);
+semilogx(wout, Lg_phase, 'LineWidth', 1.5);
 xlabel('Frequency (rad/s)');
 ylabel('Phase (deg)');
 title('Phase of Empirical Loop-Gain Response');
@@ -254,13 +324,13 @@ grid on;
 % Plot the Bode of the Closed Loop
 figure;
 subplot(2,1,1)
-semilogx(freq, 20*log10(CL_mag), 'LineWidth', 1.5);
+semilogx(wout_cl, 20*log10(Cl_mag), 'LineWidth', 1.5);
 xlabel('Frequency (rad/s)');
 ylabel('|T(j\omega)| (dB)');
 title('Magnitutde of the Empirical Closed-Loop');
 grid on;
 subplot(2,1,2)
-semilogx(freq, CL_phase, 'LineWidth', 1.5);
+semilogx(wout_cl, Cl_phase, 'LineWidth', 1.5);
 xlabel('Frequency (rad/s)');
 ylabel('Phase (deg)');
 title('Phase of the Empirical Closed-Loop Response');

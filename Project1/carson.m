@@ -20,7 +20,7 @@ G_resonance = (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega
 G = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
 
 % Empirical Frequency Ranges
-data = readmatrix('data\Spacecraft_spin_module_frequency_response_data.xlsx');
+data = readmatrix('data/Spacecraft_spin_module_frequency_response_data.xlsx');
 freq_exp = data(:,1)*2*pi;
 mag_exp = data(:,2);
 phase_exp = data(:,3);
@@ -118,6 +118,53 @@ if plot_compensators
     grid on;
     legend('show');
 end
+
+% % Get Nyquist data
+% [re, im, wout] = nyquist(Lg);
+% re = squeeze(re);
+% im = squeeze(im);
+% [GM,PM] = margin(Lg);
+% phase_plot = PM-180;
+% PM = [cosd(phase_plot),sind(phase_plot)];
+% % Plot Nyquist curve
+% figure;
+% plot(re, im, 'b-', 'LineWidth', 2);        % Main loop
+% hold on;
+% plot(re, -im, 'b-', 'LineWidth', 2);      % Mirror for real systems
+% 
+% % Critical point
+% plot(-1, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+% text(-1.5, 0, 'Crit Pt', 'FontSize', 12, 'Color', 'r');
+% 
+% % Plot phase margin point (gain = 1 crossover)
+% if exist('PM', 'var')
+%     plot(PM(1), PM(2), 'go', 'MarkerSize', 8, 'LineWidth', 2);
+%     text(PM(1), PM(2)-0.15, 'PM', 'Color', 'g', 'FontSize', 12);
+% end
+% 
+% % Plot gain margin point (phase = -180 crossover)
+% if exist('GM', 'var')
+%     plot(-1/GM, 0, 'mo', 'MarkerSize', 8, 'LineWidth', 2);
+%     text(-1/GM, 0.1, '1/GM', 'Color', 'm', 'FontSize', 12);
+% end
+% 
+% theta = linspace(0, 2*pi, 500);
+% x_unit = cos(theta);
+% y_unit = sin(theta);
+% 
+% plot(x_unit, y_unit, 'k--', 'LineWidth', 1.5);  
+% axis equal;
+% grid on;
+% xlabel('Real Axis', 'FontSize', 14);
+% ylabel('Imaginary Axis', 'FontSize', 14);
+% title('Loop Gain Nyquist Plot with Stability Margins', 'FontSize', 16);
+% ax = gca;
+% ax.FontSize = 12;
+% xlim padded;
+% ylim padded;
+% 
+% % Save the figure
+% saveas(gcf,'figs\Problem3\P3_Nyquist.png');
 
 % Determine Closed Loop Poles and Zeros
 clSys = feedback(Lg, 1);  
@@ -276,6 +323,73 @@ CL_bode_plot(Lg_exp, "figs/Problem4/", "Prob4");
 numCE = C.Numerator{1};
 denCE = C.Denominator{1};
 
+% Find Gain and Phase Margin
+% Find Phase Margin
+gain_crossing_idx = find(diff(sign(Lg_exp.lg_mag - 1)) ~= 0);
+idx = gain_crossing_idx(1);
+w1 = freq_exp(idx);
+w2 = freq_exp(idx+1);
+m1 = Lg_exp.lg_mag(idx);
+m2 = Lg_exp.lg_mag(idx+1);
+p1 = Lg_exp.lg_phase(idx);
+p2 = Lg_exp.lg_phase(idx+1);
+gain_crossover_freq = interp1([m1, m2], [w1, w2], 1);
+phase_at_gc = interp1([w1, w2], [p1, p2], gain_crossover_freq);
+PM = 180 + phase_at_gc;
+phase_plot = PM-180;
+PM = [cosd(phase_plot),sind(phase_plot)];
+
+% Find the Gain Margin (RN it is INF)
+crossing_idx = find(Lg_exp.lg_phase <= -177); 
+idx = crossing_idx(1); 
+w1 = freq_exp(idx-1);
+w2 = freq_exp(idx+1);
+p1 = Lg_exp.lg_phase(idx-1);
+p2 = Lg_exp.lg_phase(idx+1);
+m1 = (Lg_exp.lg_mag(idx-1));
+m2 = (Lg_exp.lg_mag(idx+1));
+phase_crossover_freq = interp1([p1, p2], [w1, w2], -177);
+mag_at_pc = interp1([w1, w2], [m1, m2], phase_crossover_freq);
+GM = 20 * log10(mag_at_pc);
+
+% Nyquist Plot
+lg_phase_rad = deg2rad(Lg_exp.lg_phase);
+L_complex = Lg_exp.lg_mag .* exp(1j * lg_phase_rad);
+
+figure;
+plot(real(L_complex), imag(L_complex), 'b-', 'LineWidth', 2);       
+hold on;
+plot(real(L_complex), -imag(L_complex), 'b-', 'LineWidth', 2); 
+plot(-1, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+text(-1.4, 0.1, 'Crit Point', 'Color', 'r', 'FontSize', 12);
+
+% Plot phase margin point (gain = 1 crossover)
+if exist('PM', 'var')
+    plot(PM(1), PM(2), 'go', 'MarkerSize', 8, 'LineWidth', 2);
+    text(PM(1), PM(2)-0.15, 'PM', 'Color', 'g', 'FontSize', 12);
+end
+
+% Plot gain margin point (phase = -180 crossover)
+if exist('GM', 'var')
+    plot(1/GM, 0, 'mo', 'MarkerSize', 8, 'LineWidth', 2);
+    text(0.3, 0, '1/GM', 'Color', 'm', 'FontSize', 12);
+end
+
+theta = linspace(0, 2*pi, 500);
+x_unit = cos(theta);
+y_unit = sin(theta);
+
+plot(x_unit, y_unit, 'k--', 'LineWidth', 1.5);  
+xlabel('Real Axis', 'FontSize', 14);
+ylabel('Imaginary Axis', 'FontSize', 14);
+title('Empirical Loop Gain Nyquist Plot', 'FontSize', 16);
+grid on;
+axis equal;
+xlim padded;
+ylim padded;
+ax = gca;
+ax.FontSize = 12;
+
 
 %%%%% Problem 5 %%%%%
 
@@ -351,21 +465,38 @@ for i = 1:length(w_in_set)
     legend('show');
 end
 saveas(u_plot, 'figs/Problem5/u_sine_response.png');
-
+%% asd
 %%%%% Problem 6 %%%%%
 disp('--- Problem 6 ---')
 % prob6(C, s, "figs/Problem6/");
 DC_gain = 10^(-15/20);
 pole_1 = 0.3;
 pole_2 = 0.4;
-omega_ar1 = 4.58;   % anti-resonance frequency
-omega_r1 = 2;    % resonance frequency
+omega_ar1 = 8.347;   % anti-resonance frequency
+omega_r1 = 4.58;    % resonance frequency
 zeta_z = 0.015;
 zeta_p = 0.035;
 G_resonance = (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2);
 G = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
+close all;
+% Redefine Compensator
+params = {
+    [2, 5, 0.02, omega_ar1, omega_ar1]; % anti-resonant notch
+    [2, 0.05, 1.1, omega_r1, omega_r1]; % resonant notch
+    [1, 1, 3]; % lead compensator
+    [1, 400, 10]; % lag compensator
+};
 
+<<<<<<< HEAD
 [Lg, C, fig] = loopgain(G, s, params_6, K6, true, "figs/Problem6/compensators.png");
+=======
+params_6 = params;
+K6 = K;
+
+
+% Calculate Loop Gain
+[Lg, C, ~] = loopgain(G, s, params_6, K6, false);
+>>>>>>> 6cec0ff12d68d6874fa1366ae076933053d246df
 
 CL_bode_plot(Lg, "figs/Problem6/", "Prob6");
 [mag_g, phase_g, wout_g] = bode(G, freq_exp);
@@ -404,6 +535,54 @@ if plot_compensators
     grid on;
     legend('show');
 end
+
+% Get Nyquist data
+[re, im, wout] = nyquist(Lg);
+re = squeeze(re);
+im = squeeze(im);
+[GM,PM] = margin(Lg);
+phase_plot = PM-180;
+PM = [cosd(phase_plot),sind(phase_plot)];
+% Plot Nyquist curve
+figure;
+plot(re, im, 'b-', 'LineWidth', 2);        % Main loop
+hold on;
+plot(re, -im, 'b-', 'LineWidth', 2);      % Mirror for real systems
+
+% Critical point
+plot(-1, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+text(-2, 0, 'Crit Pt', 'FontSize', 12, 'Color', 'r');
+
+% % Plot phase margin point (gain = 1 crossover)
+% if exist('PM', 'var')
+%     plot(PM(1), PM(2), 'go', 'MarkerSize', 8, 'LineWidth', 2);
+%     text(PM(1), PM(2)-0.15, 'PM', 'Color', 'g', 'FontSize', 12);
+% end
+% 
+% % Plot gain margin point (phase = -180 crossover)
+% if exist('GM', 'var')
+%     plot(-1/GM, 0, 'mo', 'MarkerSize', 8, 'LineWidth', 2);
+%     text(-1/GM, 0.1, '1/GM', 'Color', 'm', 'FontSize', 12);
+% end
+
+theta = linspace(0, 2*pi, 500);
+x_unit = cos(theta);
+y_unit = sin(theta);
+
+plot(x_unit, y_unit, 'k--', 'LineWidth', 1.5);  
+axis equal;
+grid on;
+xlabel('Real Axis', 'FontSize', 14);
+ylabel('Imaginary Axis', 'FontSize', 14);
+title('Loop Gain Nyquist Plot with Stability Margins', 'FontSize', 16);
+ax = gca;
+ax.FontSize = 12;
+xlim padded;
+ylim padded;
+
+% Save the figure
+saveas(gcf,'figs\Problem6\P6_Nyquist.png');
+
 
 
 
