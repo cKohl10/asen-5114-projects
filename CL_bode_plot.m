@@ -55,7 +55,7 @@ function CL_bode_plot(Lg, save_location, prob_name)
     %% Loop Gain Bode Plot
     % Plot the model bode plot
     figure;
-    set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
+    set(gcf, 'Position', [100, 100, 500, 400]); % Resize figure window
     subplot(2,1,1)
     semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
     hold on;
@@ -153,7 +153,7 @@ function CL_bode_plot(Lg, save_location, prob_name)
 
     %% Closed Loop Bode Plot
     figure;
-    set(gcf, 'Position', [100, 100, 700, 500]); % Resize figure window
+    set(gcf, 'Position', [100, 100, 500, 400]); % Resize figure window
     subplot(2,1,1)
     semilogx(wout_cl, db(mag_cl), 'color', 'g', 'linewidth', 2);
     hold on;

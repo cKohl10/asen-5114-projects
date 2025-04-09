@@ -77,6 +77,8 @@ disp('--- Problem 3 ---')
 %     %[1, 1, 10]; % lead compensator
 %     %[1, 0.3, 3]; % lag compensator
 % };
+
+% Parameters that describe the compensator
 K = 44;
 params = {
     [2, 5, 0.02, omega_ar1, omega_ar1]; % anti-resonant notch
@@ -84,8 +86,8 @@ params = {
 };
 
 % Calculate Gain and Phase Margin 
-plot_compensators = false;
-[Lg, C, fig] = loopgain(G, s, params, K, plot_compensators);
+plot_compensators = true;
+[Lg, C, fig] = loopgain(G, s, params, K, plot_compensators, "figs/Problem3/compensators.png");
 
 % Plot the bode plot
 [mag_g, phase_g, wout_g] = bode(G, freq_exp);
@@ -131,6 +133,34 @@ for i  = 1:length(w)
 end
 
 CL_bode_plot(Lg, "figs/Problem3/", "Prob3");
+
+% Calculate the transfer function T = C/(1+Lg)
+T_tf = C / (1 + Lg);
+
+% Get Bode data for T_tf
+[mag_T, phase_T, wout_T] = bode(T_tf);
+mag_T = squeeze(mag_T);
+phase_T = squeeze(phase_T);
+
+% Create Bode plot for T_tf
+figure_T_bode = figure;
+figure_T_bode.Position = fig_size;
+
+subplot(2,1,1);
+semilogx(wout_T, db(mag_T));
+title('Bode Plot Magnitude for T = C/(1+Lg)');
+xlabel('Frequency (rad/s)');
+ylabel('Magnitude (dB)');
+grid on;
+
+subplot(2,1,2);
+semilogx(wout_T, phase_T);
+title('Bode Plot Phase for T = C/(1+Lg)');
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+grid on;
+sgtitle('Bode Plot for T = C/(1+Lg)');
+
 
 numCA = C.Numerator{1};
 denCA = C.Denominator{1};
@@ -190,12 +220,19 @@ params = {
     [1, 400, 10]; % lag compensator
 };
 
+% Original
+% K = 44;
+% params = {
+%     [2, 5, 0.02, omega_ar1, omega_ar1]; % anti-resonant notch
+%     [2, 0.05, 1.1, omega_r1, omega_r1]; % resonant notch
+% };
+
 params_6 = params;
 K6 = K;
 
 % Calculate Gain and Phase Margin 
 plot_compensators = true;
-[~, C, fig] = loopgain(G, s, params, K, plot_compensators);
+[~, C, fig] = loopgain(G, s, params, K, plot_compensators, "figs/Problem4/compensators.png");
 
 if plot_compensators
     figure(fig)
@@ -260,6 +297,7 @@ title('Step Response');
 xlabel('Time (s)');
 ylabel('Angle (deg)');
 grid on;
+legend('show');
 saveas(step_plot, 'figs/Problem5/step_response.png');
 
 step_u_plot = figure;
@@ -269,7 +307,7 @@ hold on;
 plot(out_unsaturated.u.Time, out_unsaturated.u.Data, 'b--', 'LineWidth', 1, 'DisplayName', 'Without Saturation');
 title('Step Response Controller Output');
 xlabel('Time (s)');
-ylabel('Voltage (V)');
+ylabel('Torque (mNm)');
 grid on;
 legend('show');
 saveas(step_u_plot, 'figs/Problem5/step_u_response.png');
@@ -308,7 +346,7 @@ for i = 1:length(w_in_set)
     plot(out_unsaturated(i).u.Time, out_unsaturated(i).u.Data, 'r--', 'LineWidth', 1, 'DisplayName', 'Without Saturation');
     title(sprintf('Sine Response - w_in = %g rad/s', w_in_set(i)));
     xlabel('Time (s)');
-    ylabel('Voltage (V)');
+    ylabel('Torque (mNm)');
     grid on;
     legend('show');
 end
@@ -327,9 +365,45 @@ zeta_p = 0.035;
 G_resonance = (s^2 + 2*zeta_z*omega_ar1*s + omega_ar1^2) / (s^2 + 2*zeta_p*omega_r1*s + omega_r1^2);
 G = DC_gain * G_resonance * 1 / (s + pole_1) * 1 / (s + pole_2);
 
-[Lg, C, ~] = loopgain(G, s, params_6, K6, false);
+[Lg, C, fig] = loopgain(G, s, params_6, K6, true, "figs/Problem6/compensators.png");
 
 CL_bode_plot(Lg, "figs/Problem6/", "Prob6");
+[mag_g, phase_g, wout_g] = bode(G, freq_exp);
+mag_g = squeeze(mag_g);
+phase_g = squeeze(phase_g);
+
+[mag_lg, phase_lg, wout_lg] = bode(Lg);
+phase_lg = squeeze(phase_lg);
+mag_lg = squeeze(mag_lg);
+
+[mag_c, phase_c, wout_c] = bode(C);
+phase_c = squeeze(phase_c);
+mag_c = squeeze(mag_c);
+
+if plot_compensators
+    figure(fig)
+    fig.Position = fig_size;
+    subplot(2,1,1)
+    semilogx(wout_g, db(mag_g), 'k--', 'linewidth', 2, 'DisplayName', 'Empirical');
+    hold on;
+    title('Magnitude');
+    xlabel('Frequency (rad/s)');
+    ylabel('Amplitude (dB)');
+    xlim([freq_exp(1), freq_exp(end)]);
+    grid on;
+    legend('show');
+
+    % Plot the phase plot
+    subplot(2,1,2)
+    semilogx(wout_g, phase_g, 'k--', 'linewidth', 2, 'DisplayName', 'Empirical');
+    hold on;
+    title('Phase');
+    xlabel('Frequency (rad/s)');
+    ylabel('Phase (deg)');
+    xlim([freq_exp(1), freq_exp(end)]);
+    grid on;
+    legend('show');
+end
 
 
 
