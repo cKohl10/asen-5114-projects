@@ -272,3 +272,26 @@ ylabel('Phase (deg)');
 xlim([wout_lead(1), wout_lead(end)]);
 sgtitle('Lead Compensator Bode Plot')
 grid on;
+
+[GM,PM] = margin(Lg); 
+GM = 20*log10(GM);
+Margin = [GM,PM]';
+
+% Determine Closed Loop Poles and Zeros
+clSys = feedback(Lg, 1);  
+CLPoles = pole(clSys);
+CLZeros = zero(clSys);
+bw = bandwidth(clSys);
+
+% Evaluate Tracking 
+w = logspace(-1, 2.5, 1000);  
+for i  = 1:length(w)
+    Lg_eval(i) = evalfr(Lg, w(i));
+    Ts_eval(i) = 1/abs(1-Lg_eval(i)); 
+end
+
+% Display the margins and bandwidth 
+disp(' --- Problem 3 --- ')
+disp(['Gain Margin: ', num2str(GM), 'dB']);
+disp(['Phase Margin: ', num2str(PM), 'deg']);
+disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
