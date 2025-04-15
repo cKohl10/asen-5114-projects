@@ -65,8 +65,23 @@ mag_tfest = squeeze(mag_tfest);
 
 
 %% Create Minimal State Space Representation
+% Controllable canonical form
 [A, B, C, D] = tf2ss(G.Numerator{1}, G.Denominator{1});
-save('data\state_space.mat' , 'A', 'B', 'C', 'D')
+
+% Get observable canonical form
+A_obs = A';
+B_obs = C';
+C_obs = B';
+D_obs = D';
+
+% Save state space realizations
+save('data\state_space.mat' , 'A', 'B', 'C', 'D', 'A_obs', 'B_obs', 'C_obs', 'D_obs');
+
+% Check controllability
+ctrl_mat = ctrb(A, B);
+
+% Check observability
+obsv_mat = obsv(A, C);
 
 
 %% Only Empirical Bode
