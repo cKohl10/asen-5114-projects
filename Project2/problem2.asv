@@ -15,7 +15,7 @@ j = sqrt(-1);
 OlPoles = pole(ss_sys);
 wn = 2*pi;
 zeta = 0.7;
-Desired_poles = [-zeta*wn+wn*sqrt(1-zeta^2)*j,-0.4-6*j,-2.4,-2.3];
+Desired_poles = [-zeta*wn+6*j,-0.4-6*j,-2.4,-2.3];
 
 %% Design Gain Matrix K to get desired poles A-BK+BFR
 K = place(A,B,Desired_poles);
