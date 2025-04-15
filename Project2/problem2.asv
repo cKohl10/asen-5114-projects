@@ -37,6 +37,7 @@ K = place(A,B,Desired_poles);
 s = tf('s');
 sys_tf = ss(A, B, K, 0);
 Lg_neg = tf(sys_tf);  
+[GM,PM] = margin(Lg_neg);
 
 % Closed Loop TF
 Acl = A - B*K;
@@ -88,33 +89,28 @@ title('Open-Loop and Closed-Loop Poles');
 legend('Open-Loop Poles', 'Closed-Loop Poles');
 xline(0, '--k');  % show imaginary axis
 
-% Calculate and Display the margins and bandwidth 
-bw = bandwidth(Cl_Tf,-3.1);
-[GM,PM] = margin(Lg_neg);
-GM = 20*log10(GM);
 
-disp(['Gain Margin: ', num2str(GM), 'dB']);
-disp(['Phase Margin: ', num2str(PM), 'deg']);
-disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
+Cl_bandwidth = bandwidth(Cl_Tf,-3.1)
+
 
 %% Functions 
 function x_opt = optimize_bandwidth()
-    % Load system
+    %% Load system
     SS = load("Data/state_space.mat");
     A = SS.A; B = SS.B; C = SS.C; D = SS.D;
 
-    % Initial guess: [Re, Im, p3,p4]
+    %% Initial guess: [Re, Im, p3,p4]
     x0 = [-0.069, 4.06,-4,-3];
     
-    % Bounds: keep poles in stable LHP
+    %% Bounds: keep poles in stable LHP
     lb = [-1000, 0.5,-100,-100];   % Avoid poles too close to jω
     ub = [-0.01, 20,-0.05,-0.05];
 
-    % Run fmincon
+    %% Run fmincon
     options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'sqp');
     x_opt = fmincon(@(x) pole_bandwidth_cost(x, A, B, C), x0, [], [], [], [], lb, ub, [], options);
 
-    % Show final results
+    %% Show final results
     fprintf('Optimal Pole Parts:\n');
     disp(x_opt);
 end
@@ -137,7 +133,7 @@ function J = pole_bandwidth_cost(x, A, B, C)
         bw = bandwidth(Cl_Tf,-3);
 
         % Compute gain at the notch frequency (4.6 rad/s)
-        [mag, ~] = bode(Cl_Tf, 4.6);
+        [mag, w] = bode(Cl_Tf, 4.6);
         mag_at_notch = squeeze(mag);  
         gain_dB = 20 * log10(mag_at_notch);
         notch_penalty = max(0, (-2.5 - gain_dB)^2);
@@ -149,25 +145,13 @@ function J = pole_bandwidth_cost(x, A, B, C)
         w = logspace(-1, 2, 1000);
         [mag_u2r, ~] = bode(Cl_u2r, w);
         mag_u2r = squeeze(mag_u2r); 
+        violation = mag_u2r > gain_limit;
         excess = mag_u2r - gain_limit;
-        excess(excess < 0) = 0;
-        input_penalty = trapz(w, log(1 + excess));
-
-
-        % Penilize Small Margins
-        sys_tf = ss(A, B, K, 0);
-        Lg_neg = tf(sys_tf);  
-        [GM,PM] = margin(Lg_neg);
-        GM = 20*log10(GM);
-
-        GM_target = 6;   
-        PM_target = 45;
-
-        gm_penalty = max(0, GM_target - GM)^2;
-        pm_penalty = max(0, PM_target - PM)^2;
+        excess(~violation) = 0;  
+        input_penalty = trapz(w, log(1 + max(0, mag_u2r - gain_limit)));
 
         % Final cost: bandwidth deviation + notch penalty
-        J = 100*(bw - 2*pi)^2 + 2*notch_penalty + 0.5*input_penalty+ 2*gm_penalty + pm_penalty;
+        J = 100*(bw - 2*pi)^2 + 2*notch_penalty + 0.5*input_penalty;
         
     catch
         J = 1e6;
