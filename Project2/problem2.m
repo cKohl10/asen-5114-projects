@@ -167,8 +167,8 @@ function J = pole_bandwidth_cost(x, A, B, C)
         [GM,PM] = margin(Lg_neg);
         GM = 20*log10(GM);
 
-        GM_target = 6;   
-        PM_target = 45;
+        GM_target = 10;   
+        PM_target = 40;
 
         gm_penalty = max(0, GM_target - GM)^2;
         pm_penalty = max(0, PM_target - PM)^2;
