@@ -14,17 +14,33 @@ ss_sys = ss(A,B,C,D);
 j = sqrt(-1);
 OlPoles = pole(ss_sys);
 wn = 2*pi;
-zeta = 0.7;
-Desired_poles = [-zeta*wn+wn*sqrt(1-zeta^2)*j,-0.4-6*j,-2.4,-2.3];
+zeta = 0.1;
+Desired_poles = [-zeta*wn+wn*sqrt(1-zeta^2)*j,-zeta*wn-wn*sqrt(1-zeta^2)*j,-4,-3];
 
-%% Design Gain Matrix K to get desired poles A-BK+BFR
+%% Design Gain Matrix K to get desired poles
 K = place(A,B,Desired_poles);
+F = 1;
+
+%% Find Loop Gain and Closed Loop TF
 s = tf('s');
-Lg_neg  = K*inv((s*eye(size(A))-A))*B;
+sys_tf = ss(A, B, K, 0);
+Lg_neg = tf(sys_tf);  
 
-%Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F*R;
+Acl = A - B*K;
+Bcl = B*F;
+Cl_Tf = tf(ss(Acl, Bcl, C, 0));
 
+%% Plot Bode Plot for Loop gain and Closed Loop
 figure;
 bode(Lg_neg);
+grid on; % Turn on grid
+title('Bode Plot of Lg\_neg'); % Add a title
+xlabel('Frequency (rad/s)'); % X-axis label
 
+figure;
+bode(Cl_Tf);
+grid on; % Turn on grid
+title('Bode Plot of Cl\_Tf'); % Add a title
+xlabel('Frequency (rad/s)'); % X-axis label
 
+Cl_bandwidth = bandwidth(Cl_Tf)

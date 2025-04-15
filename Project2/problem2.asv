@@ -15,16 +15,27 @@ j = sqrt(-1);
 OlPoles = pole(ss_sys);
 wn = 2*pi;
 zeta = 0.7;
-Desired_poles = [-zeta*wn+6*j,-0.4-6*j,-2.4,-2.3];
+Desired_poles = [-zeta*wn+wn*sqrt(1-zeta^2)*j,-zeta*wn-wn*sqrt(1-zeta^2)*j,-6,-4];
 
-%% Design Gain Matrix K to get desired poles A-BK+BFR
+%% Design Gain Matrix K to get desired poles
 K = place(A,B,Desired_poles);
+F = 1;
+
+%% Find Loop Gain and Closed Loop TF
 s = tf('s');
 Lg_neg  = K*inv((s*eye(size(A))-A))*B;
+Cl_Tf = C*inv((s*eye(size(A))-A+B*K))*B*F;
 
-%Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F*R;
-
+%% Plot Bode Plot for Loop gain and Closed Loop
 figure;
 bode(Lg_neg);
+grid on; % Turn on grid
 
 
+% Plot the second Bode plot
+figure;
+bode(Cl_Tf);
+grid on; % Turn on grid
+
+
+%Cl_bandwidth = bandwidth(Cl_Tf)
