@@ -88,10 +88,17 @@ title('Open-Loop and Closed-Loop Poles');
 legend('Open-Loop Poles', 'Closed-Loop Poles');
 xline(0, '--k');  % show imaginary axis
 
-% Calculate and Display the margins and bandwidth 
+% Calculate the margins and bandwidth 
 bw = bandwidth(Cl_Tf,-3.1);
 [GM,PM] = margin(Lg_neg);
 GM = 20*log10(GM);
+
+% Display Results
+clc;
+fprintf('Closed-Loop Poles:\n');
+for i = 1:length(closed_loop_poles)
+    fprintf('%.4f %+.4fj\n', real(closed_loop_poles(i)), imag(closed_loop_poles(i)));
+end
 
 disp(['Gain Margin: ', num2str(GM), 'dB']);
 disp(['Phase Margin: ', num2str(PM), 'deg']);
@@ -114,9 +121,9 @@ function x_opt = optimize_bandwidth()
     options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'sqp');
     x_opt = fmincon(@(x) pole_bandwidth_cost(x, A, B, C), x0, [], [], [], [], lb, ub, [], options);
 
-    % Show final results
-    fprintf('Optimal Pole Parts:\n');
-    disp(x_opt);
+    % % Show final results
+    % fprintf('Optimal Pole Parts:\n');
+    % disp(x_opt);
 end
 
 function J = pole_bandwidth_cost(x, A, B, C)
