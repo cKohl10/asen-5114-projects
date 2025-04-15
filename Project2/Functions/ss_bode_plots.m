@@ -18,6 +18,9 @@ Lg = K*inv(eye(size(A)).*s - A)*B;
 % Closed loop tf
 Cl = C * inv(eye(size(A)).*s - A + B*K) * B * F;
 
+% Torque input closed loop tf
+In = inv(eye(length(K(:,1))) + K*inv(s*eye(size(A)) - A)*B)*F;
+
 % Calculate the frequency responses
 [mag_lg, phase_lg, wout_lg] = bode(Lg);
 phase_lg = squeeze(phase_lg);
@@ -26,6 +29,10 @@ mag_lg = squeeze(mag_lg);
 [mag_cl, phase_cl, wout_cl] = bode(Cl);
 phase_cl = squeeze(phase_cl);
 mag_cl = squeeze(mag_cl);
+
+[mag_in, phase_in, wout_in] = bode(In);
+phase_in = squeeze(phase_in);
+mag_in = squeeze(mag_in);
 
 % Calculate the closed loop bandwidth
 closed_loop_bandwidth = bandwidth(Cl);
@@ -62,7 +69,6 @@ set(gcf, 'Position', [100, 100, 500, 400]); % Resize figure window
 subplot(2,1,1)
 semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
 hold on;
-xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
 yline(-10, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
 if(~isempty(phase_crossover_ind))
     for i = 1:length(phase_crossover_ind)
@@ -108,7 +114,6 @@ end
 subplot(2,1,2)
 semilogx(wout_lg, phase_lg, 'linewidth', 2);
 hold on;
-xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
 for i = 1:length(gain_crossover_ind)
     % Plot green if good phase margin, otherwise red
     if phase_lg(gain_crossover_ind(i)) >= -140
@@ -180,6 +185,29 @@ xlim([wout_cl(1), wout_cl(end)]);
 sgtitle('Closed Loop Bode Plot')
 grid on;
 
+%% Control Input Bode Plot
+figure;
+set(gcf, 'Position', [100, 100, 500, 400]); % Resize figure window
+subplot(2,1,1)
+semilogx(wout_in, db(mag_in), 'color', 'r', 'linewidth', 2);
+hold on;
+yline(20*log10(67), 'k--', 'LineWidth', 1, 'label', 'Saturation Limit', 'LabelHorizontalAlignment', 'left'); % Add line at 1 Hz with label
+title('Magnitude (mN-m/rad)');
+xlabel('Frequency (rad/s)');
+ylabel('Amplitude (dB)');
+xlim([wout_in(1), wout_in(end)]);
+grid on;
+
+% Plot the phase plot
+subplot(2,1,2)
+semilogx(wout_in, phase_in, 'color', 'r', 'linewidth', 2);
+hold on;
+title('Phase');
+xlabel('Frequency (rad/s)');
+ylabel('Phase (deg)');
+xlim([wout_in(1), wout_in(end)]);
+sgtitle('Reference Input to Plant Input')
+grid on;
 
 end
 
