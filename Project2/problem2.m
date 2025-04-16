@@ -27,31 +27,33 @@ K = place(A,B,Desired_poles);
 %% Find Loop Gain, Closed Loop TF, and TF from Reference to Plant Input
 % Loop Gain
 s = tf('s');
-sys_tf = ss(A, B, K, 0);
-Lg_neg = tf(sys_tf);  
+Lg_neg = K * inv(s * eye(size(A)) - A) * B;
 
 % Closed Loop TF
-Acl = A - B*K;
-F =  pinv(C * (Acl \ B));
-Bcl = B*F;
-Cl_Tf = tf(ss(Acl, Bcl, C, 0));
+F =  inv(C*inv(-A+B*K)*B);
+Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
 
-% Reference input to Plant Input
+% Reference to Plant Input
 Cl_u2r = inv(1+K*inv(s*eye(size(A))-A)*B)*F;
 
 %% Plot Bode Plot for Loop gain, Closed Loop, and Reference to Plant Input Response
-CL_bode_plot(Lg_neg, 'Figures/Problem2/', "Problem 2")
+CL_bode_plot(Lg_neg, Cl_Tf ,'Figures/Problem2/', "Problem 2");
+
+% Loop Gain Bode
 % figure;
 % bode(Lg_neg);
 % grid on; % Turn on grid
 % title('Bode Plot of Negative Loop Gain'); % Add a title
 % xlabel('Frequency (rad/s)'); % X-axis label
+% 
+% % Closed Loop Bode
 % figure;
 % bode(Cl_Tf);
 % grid on; % Turn on grid
 % title('Bode Plot of Closed Loop TF'); % Add a title
 % xlabel('Frequency (rad/s)'); % X-axis label
 
+% Reference to Plant Input
 figure;
 bode(Cl_u2r);
 grid on; % Turn on grid
@@ -163,7 +165,7 @@ function J = pole_bandwidth_cost(x, A, B, C)
         pm_penalty = max(0, PM_target - PM)^2;
 
         % Final cost: bandwidth deviation + notch penalty
-        J = 10*bw_penalty + 0*notch_penalty + 0.001*input_penalty + 10*gm_penalty + 10*deg2rad(pm_penalty);
+        J = 10*bw_penalty + 0*notch_penalty + 0.01*input_penalty + 10*gm_penalty + 10*deg2rad(pm_penalty);
         
     catch
         J = 1e6;
