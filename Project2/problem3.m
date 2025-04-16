@@ -5,10 +5,10 @@ close all; clear; clc;
 
 %% Simulink Model %%
 SS = load("Data/state_space.mat");
-A = SS.A;
-B = SS.B;
-C = SS.C;
-D = SS.D;
+A = SS.A';
+B = SS.C';
+C = SS.B';
+D = SS.D';
 ss_sys = ss(A,B,C,D);
 
 Cl = load("Data/closed_loop_ss.mat");
@@ -26,14 +26,14 @@ control_plot(out, fig_size, "Figures", "P3 Step Response");
 
 % Step response 0.1 Hz
 useSine = true;
-u_amp = 1; % rad
+u_amp = 0; % rad
 u_w = 0.1 * 2 * pi; % rad/s
 out = sim('Simulink/model_response', 'StopTime', '100');
 control_plot(out, fig_size, "Figures", "P3 Step Response 0.1 Hz");
 
 % Step response 1 Hz
-useSine = true;
-u_amp = 1; % rad
-u_w = 2 * pi; % rad/s
-out = sim('Simulink/model_response', 'StopTime', '100');
-control_plot(out, fig_size, "Figures", "P3 Step Response 1 Hz");
+% useSine = true;
+% u_amp = 1; % rad
+% u_w = 2 * pi; % rad/s
+% out = sim('Simulink/model_response', 'StopTime', '100');
+% control_plot(out, fig_size, "Figures", "P3 Step Response 1 Hz");
