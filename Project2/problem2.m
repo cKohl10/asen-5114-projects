@@ -26,8 +26,8 @@ K = place(A,B,Desired_poles);
 %% Find Loop Gain, Closed Loop TF, and TF from Reference to Plant Input
 % Loop Gain
 s = tf('s');
-Lg_neg = K * inv(s * eye(size(A)) - A) * B;
-
+%Lg_neg_test = K * inv(s * eye(size(A)) - A) * B;
+Lg_neg = tf(ss(A, B, K, 0));
 % Closed Loop TF
 F =  inv(C*inv(-A+B*K)*B);
 Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
@@ -152,7 +152,7 @@ function J = pole_bandwidth_cost(x, A, B, C)
         s = tf('s');
         F = inv(C*inv(-A+B*K)*B);
         Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
-        
+
         % Compute closed-loop bandwidth
         bw = bandwidth(Cl_Tf);
         % bw_penalty = abs(bw - 2*pi)^2;
@@ -163,7 +163,7 @@ function J = pole_bandwidth_cost(x, A, B, C)
         % mag_at_notch = squeeze(mag);  
         % gain_dB = 20 * log10(mag_at_notch);
         % notch_penalty = max(0, (-2 - gain_dB)^2);
-        
+
         w_notch = logspace(log10(3), log10(10), 300);  
         [mag, ~] = bode(Cl_Tf, w_notch);
         mag = squeeze(mag);
@@ -172,7 +172,7 @@ function J = pole_bandwidth_cost(x, A, B, C)
         gain_drop = drop_threshold - gain_dB;
         gain_drop(gain_drop < 0) = 0; 
         notch_penalty = trapz(log10(w_notch), (gain_drop / 10).^2);
-        
+
         % Create penality to attempt to keep the plant input at approx < 67 mNm
         Cl_u2r = inv(1+K*inv(s*eye(size(A))-A)*B)*F;
         gain_limit = 67;
