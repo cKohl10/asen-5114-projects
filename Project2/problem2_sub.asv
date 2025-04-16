@@ -1,0 +1,64 @@
+%% Sub Script for Problem 2 : Design State Variable Feedback Controller
+% Authors: Thomas Dunnington, Owen Craig, Carson Kohbrenner
+close all; clear; clc;
+
+%% Extract State Space
+SS = load("Data/state_space.mat");
+A = SS.A';
+B = SS.C';
+C = SS.B';
+D = SS.D';
+ss_sys = ss(A,B,C,D);
+
+% Plot the cost space
+% Initial guess: [Re, Im, p3,p4]
+x0 = [-0.069, 4.6,-4,-3];
+
+% Bounds: keep poles in stable LHP
+lb = [-1.0, 3.5, -100, -100];
+ub = [-0.01, 6.0, -0.05, -0.05];
+
+plot_cost_space(x0, lb, ub, A, B, C);
+
+function plot_cost_space(x0, lb, ub, A, B, C)
+    % Create a grid of points in the x-space
+    num_iter = 5;
+    coords = {
+        linspace(lb(1)+x0(1), ub(1)+x0(1), num_iter),
+        linspace(lb(2)+x0(2), ub(2)+x0(2), num_iter),
+        linspace(lb(3)+x0(3), ub(3)+x0(3), num_iter),
+        linspace(lb(4)+x0(4), ub(4)+x0(4), num_iter),
+    };
+    % [X1, X2, X3, X4] = ndgrid(coords{1}, coords{2}, coords{3}, coords{4});
+    % x_grid = [X1(:), X2(:), X3(:), X4(:)];
+
+    % Calculate the cost for each point in the grid
+    J_grid = zeros(num_iter, num_iter, num_iter, num_iter);
+    for i = 1:num_iter
+        for j = 1:num_iter
+            for k = 1:num_iter
+                for l = 1:num_iter
+                    J_grid(i,j,k,l) = pole_bandwidth_cost([coords{1}(i), coords{2}(j), coords{3}(k), coords{4}(l)], A, B, C);
+                end
+            end
+        end
+    end
+
+
+
+    % Create a 4D matrix J from the grid and x_grid
+    V1 = [1, 2, 3, 4]; % [x_dim, y_dim, anim_dim, const_dim]
+    V2 = [4, 1, 2, 3]; % [x_dim, y_dim, anim_dim, const_dim]
+    V3 = [3, 4, 1, 2]; % [x_dim, y_dim, anim_dim, const_dim]
+    V4 = [2, 3, 4, 1]; % [x_dim, y_dim, anim_dim, const_dim]
+    options = struct();
+    options.dim_names = {'Re', 'Im', 'p3', 'p4'};
+    options.const_idx = 1; % Use slice along Dim 4 (Time)
+    options.frame_pause = 0.05;
+    options.plot_type = 'imagesc'; % Use imagesc
+    animate_slice_plot(J_grid, V1, coords, options);
+    animate_slice_plot(J_grid, V2, coords, options);
+    animate_slice_plot(J_grid, V3, coords, options);
+    animate_slice_plot(J_grid, V4, coords, options);
+    
+end
