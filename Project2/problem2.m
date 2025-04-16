@@ -22,6 +22,8 @@ Desired_poles = [p1, p2, p3, p4];
 
 % Design Gain Matrix K to get desired poles
 K = place(A,B,Desired_poles);
+save('Data/K_matrix.mat', 'K');
+
 
 %% Find Loop Gain, Closed Loop TF, and TF from Reference to Plant Input
 % Loop Gain
