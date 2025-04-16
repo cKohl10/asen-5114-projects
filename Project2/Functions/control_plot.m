@@ -1,9 +1,9 @@
-function control_plot(out, fig_size, fig_name)
+function control_plot(out, fig_size, fig_save, title_str)
     f = figure();
     f.Position = fig_size;
-    hold on;
     subplot(2, 1, 1);
     plot(out.input.Time, out.input.Data, 'r', 'LineWidth', 2, 'DisplayName', 'Reference Angle (deg)');
+    hold on;
     plot(out.theta.Time, out.theta.Data, 'b', 'LineWidth', 2, 'DisplayName', 'Response (deg)');
     title(sprintf('Response - %s', title_str));
     xlabel('Time (s)');
@@ -18,5 +18,5 @@ function control_plot(out, fig_size, fig_name)
     ylabel('Torque (mNm)');
     grid on;
     legend('show');
-    saveas(f, fig_name);
+    saveas(f, fig_save + "/" + title_str + ".png");
 end
