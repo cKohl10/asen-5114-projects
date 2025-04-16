@@ -30,9 +30,14 @@ save('Data/K_matrix.mat', 'K');
 s = tf('s');
 %Lg_neg_test = K * inv(s * eye(size(A)) - A) * B;
 Lg_neg = tf(ss(A, B, K, 0));
+
 % Closed Loop TF
-F =  inv(C*inv(-A+B*K)*B);
-Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
+% F =  inv(C*inv(-A+B*K)*B);
+% Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
+Acl = A - B*K;
+sys_cl = ss(Acl, B, C, 0);
+F = 1 / dcgain(sys_cl);
+Cl_Tf = tf(sys_cl) * F;
 
 % Reference to Plant Input
 Cl_u2r = inv(1+K*inv(s*eye(size(A))-A)*B)*F;
@@ -159,6 +164,35 @@ function J = pole_bandwidth_cost(x, A, B, C)
         
         % Compute closed-loop bandwidth
         bw = bandwidth(Cl_Tf,-3);
+
+        s = tf('s');
+        % F = inv(C*inv(-A+B*K)*B);
+        % Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
+        Acl = A - B*K;
+        sys_cl = ss(Acl, B, C, 0);
+        F = 1 / dcgain(sys_cl);
+        Cl_Tf = tf(sys_cl) * F;
+
+        % Compute closed-loop bandwidth
+        bw = bandwidth(Cl_Tf);
+        % bw_penalty = abs(bw - 2*pi)^2;
+        bw_penalty = max(0,bw-2*pi)^2;
+
+        % Notch penalty
+        [mag, ~] = bode(Cl_Tf, 4.6);
+        mag_at_notch = squeeze(mag);  
+        gain_dB = 20 * log10(mag_at_notch);
+        notch_penalty = max(0, (-2 - gain_dB)^2);
+
+        % w_notch = logspace(log10(3), log10(10), 300);  
+        % [mag, ~] = bode(Cl_Tf, w_notch);
+        % mag = squeeze(mag);
+        % gain_dB = 20 * log10(mag);
+        % drop_threshold = -2;
+        % gain_drop = drop_threshold - gain_dB;
+        % gain_drop(gain_drop < 0) = 0; 
+        % notch_penalty = trapz(log10(w_notch), (gain_drop / 10).^2);
+
 
         % Compute gain at the notch frequency (4.6 rad/s)
         [mag, ~] = bode(Cl_Tf, 4.6);
