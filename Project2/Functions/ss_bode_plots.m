@@ -21,7 +21,7 @@ sys_cl = ss(Acl, B, C, 0);
 Cl = tf(sys_cl) * F;
 
 % Torque input closed loop tf
-In = inv(eye(length(K(:,1))) + K*inv(s*eye(size(A)) - A)*B)*F;
+In = inv(eye(length(K(:,1))) + Lg)*F;
 
 % Calculate the frequency responses
 [mag_lg, phase_lg, wout_lg] = bode(Lg);
