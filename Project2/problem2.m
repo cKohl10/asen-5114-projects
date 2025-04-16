@@ -35,20 +35,20 @@ Lg_neg = tf(ss(A, B, K, 0));
 % F =  inv(C*inv(-A+B*K)*B);
 % Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
 Acl = A - B*K;
-sys_cl = ss(Acl, B, C, 0);
-F = 1 / dcgain(sys_cl);
-Cl_Tf = tf(sys_cl) * F;
+F = pinv(C * (Acl \ B));
+Cl_Tf = tf(ss(Acl, B*F, C, 0));
+        
 
 % Reference to Plant Input
-Cl_u2r = inv(1+K*inv(s*eye(size(A))-A)*B)*F;
-
+% Cl_u2r = inv(1+K*inv(s*eye(size(A))-A)*B)*F;
+Cl_u2r = inv(1+Lg_neg)*F;
 [mag_u2r, phase_u2r, wout_u2r] = bode(Cl_u2r);
 mag_u2r = squeeze(mag_u2r);
 phase_u2r = squeeze(phase_u2r);
 input_limit_dB = 20*log10(67); 
 
 %% Plot Bode Plot for Loop gain, Closed Loop, and Reference to Plant Input Response
-CL_bode_plot(Lg_neg, Cl_Tf ,'Figures/Problem2/', "Problem 2");
+%CL_bode_plot(Lg_neg, Cl_Tf ,'Figures/Problem2/', "Problem 2");
 ss_bode_plots(A,B,C,D,K,F);
 
 % Loop Gain Bode
@@ -66,31 +66,31 @@ ss_bode_plots(A,B,C,D,K,F);
 % xlabel('Frequency (rad/s)'); % X-axis label
 
 % Reference to Plant Input
-figure;
-set(gcf, 'Position', [100, 100, 500, 400]); 
-% Magnitude subplot
-subplot(2,1,1)
-semilogx(wout_u2r, db(mag_u2r), 'b', 'LineWidth', 2);
-hold on;
-xline(2*pi, 'k--', 'LineWidth', 1, 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom');
-yline(input_limit_dB, 'r--', 'LineWidth', 1.5, 'DisplayName', 'Input Limit');
-ylabel('Magnitude (dB)');
-xlabel('Frequency (rad/s)');
-title('Reference to Plant Input Magnitude');
-legend('Cl\_u2r', 'Input Limit');
-grid on;
-xlim([wout_u2r(1), wout_u2r(end)]);
-% Phase subplot
-subplot(2,1,2)
-semilogx(wout_u2r, phase_u2r, 'b', 'LineWidth', 2);
-hold on;
-xline(2*pi, 'k--', 'LineWidth', 1, 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom');
-xlabel('Frequency (rad/s)');
-ylabel('Phase (deg)');
-title('Reference to Plant Input Phase');
-grid on;
-xlim([wout_u2r(1), wout_u2r(end)]);
-sgtitle('Bode Plot of Reference to Plant Input Transfer Function');
+% figure(6);
+% set(gcf, 'Position', [100, 100, 500, 400]); 
+% % Magnitude subplot
+% subplot(2,1,1)
+% semilogx(wout_u2r, db(mag_u2r), 'b', 'LineWidth', 2);
+% hold on;
+% xline(2*pi, 'k--', 'LineWidth', 1, 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom');
+% yline(input_limit_dB, 'r--', 'LineWidth', 1.5, 'DisplayName', 'Input Limit');
+% ylabel('Magnitude (dB)');
+% xlabel('Frequency (rad/s)');
+% title('Reference to Plant Input Magnitude');
+% legend('Cl\_u2r', 'Input Limit');
+% grid on;
+% xlim([wout_u2r(1), wout_u2r(end)]);
+% % Phase subplot
+% subplot(2,1,2)
+% semilogx(wout_u2r, phase_u2r, 'b', 'LineWidth', 2);
+% hold on;
+% xline(2*pi, 'k--', 'LineWidth', 1, 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom');
+% xlabel('Frequency (rad/s)');
+% ylabel('Phase (deg)');
+% title('Reference to Plant Input Phase');
+% grid on;
+% xlim([wout_u2r(1), wout_u2r(end)]);
+% sgtitle('Bode Plot of Reference to Plant Input Transfer Function');
 
 %% Plot Ol and Cl pole locations
 % Calculate open-loop and closed-loop poles
@@ -111,7 +111,7 @@ legend('Open-Loop Poles', 'Closed-Loop Poles');
 xline(0, '--k');
 
 %% Calculate the margins and bandwidth 
-bw = bandwidth(Cl_Tf);
+bw = bandwidth(Cl_Tf,-3.05);
 [GM,PM] = margin(Lg_neg);
 GM = 20*log10(GM);
 
@@ -125,7 +125,6 @@ disp(['Gain Margin: ', num2str(GM), 'dB']);
 disp(['Phase Margin: ', num2str(PM), 'deg']);
 disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
 
-%% Functions 
 %% Functions 
 function x_opt = optimize_bandwidth()
     % Load system
@@ -199,18 +198,6 @@ function J = pole_bandwidth_cost(x, A, B, C)
         mag_at_notch = squeeze(mag);  
         gain_dB = 20 * log10(mag_at_notch);
         notch_penalty = max(0, (-2.5 - gain_dB)^2);
-        
-        % Create penality to attempt to keep the plant input at approx < 67 mNm
-        s = tf('s');
-        Cl_u2r = inv(1+K*inv(s*eye(size(A))-A)*B)*F;
-        gain_limit = 67;
-        w = logspace(-1, 2, 1000);
-        [mag_u2r, ~] = bode(Cl_u2r, w);
-        mag_u2r = squeeze(mag_u2r); 
-        excess = mag_u2r - gain_limit;
-        excess(excess < 0) = 0;
-        input_penalty = trapz(w, log(1 + excess));
-
 
         % Penilize Small Margins
         sys_tf = ss(A, B, K, 0);
@@ -224,8 +211,18 @@ function J = pole_bandwidth_cost(x, A, B, C)
         gm_penalty = max(0, GM_target - GM)^2;
         pm_penalty = max(0, PM_target - PM)^2;
 
+        % Create penality to attempt to keep the plant input at approx < 67 mNm
+        Cl_u2r = inv(1+Lg_neg)*F;
+        gain_limit = 67;
+        w = logspace(-1, 2, 1000);
+        [mag_u2r, ~] = bode(Cl_u2r, w);
+        mag_u2r = squeeze(mag_u2r); 
+        excess = mag_u2r - gain_limit;
+        excess(excess < 0) = 0;
+        input_penalty = trapz(w, log(1 + excess));
+
         % Final cost: bandwidth deviation + notch penalty
-        J = 100*(bw - 2*pi)^2 + 2*notch_penalty + 0.5*input_penalty+ 2*gm_penalty + pm_penalty;
+        J = 100*(bw - 2*pi)^2 + 200*notch_penalty + 0*input_penalty+ 2*gm_penalty + pm_penalty;
         
     catch
         J = 1e6;

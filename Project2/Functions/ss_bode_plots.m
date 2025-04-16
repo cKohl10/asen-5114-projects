@@ -35,7 +35,7 @@ phase_in = squeeze(phase_in);
 mag_in = squeeze(mag_in);
 
 % Calculate the closed loop bandwidth
-closed_loop_bandwidth = bandwidth(Cl);
+closed_loop_bandwidth = bandwidth(Cl,-3.005);
 
 % Calculate the open loop stability margins
 % Phase margin
