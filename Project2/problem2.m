@@ -44,6 +44,7 @@ input_limit_dB = 20*log10(67);
 
 %% Plot Bode Plot for Loop gain, Closed Loop, and Reference to Plant Input Response
 CL_bode_plot(Lg_neg, Cl_Tf ,'Figures/Problem2/', "Problem 2");
+ss_bode_plots(A,B,C,D,K,F);
 
 % Loop Gain Bode
 % figure;
