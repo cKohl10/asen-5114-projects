@@ -8,16 +8,17 @@ function J = pole_bandwidth_cost(x, A, B, C)
     try
        % Place poles and compute closed-loop TF
         K = place(A, B, Desired_poles);
-        Acl = A - B*K;
-        F = pinv(C * (Acl \ B));
-        Cl_Tf = tf(ss(Acl, B*F, C, 0));
-        
-        % Compute closed-loop bandwidth
-        bw = bandwidth(Cl_Tf,-3);
 
-        s = tf('s');
+        % Acl = A - B*K;
+        % F = pinv(C * (-Acl \ B));
+        % Cl_Tf = tf(ss(Acl, B*F, C, 0));
+        % 
+        % % Compute closed-loop bandwidth
+        % bw = bandwidth(Cl_Tf,-3);
+        % s = tf('s');
         % F = inv(C*inv(-A+B*K)*B);
         % Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
+        
         Acl = A - B*K;
         sys_cl = ss(Acl, B, C, 0);
         F = 1 / dcgain(sys_cl);

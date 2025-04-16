@@ -32,6 +32,7 @@ control_plot(out, fig_size, "Figures", "P3 Step Response 0.1 Hz");
 
 % Step response 1 Hz
 useSine = true;
+u_amp = 60/10^(51/20);
 u_w = 2 * pi; % rad/s
-out = sim('Simulink/model_response', 'StopTime', '100');
+out = sim('Simulink/model_response', 'StopTime', '20');
 control_plot(out, fig_size, "Figures", "P3 Step Response 1 Hz");

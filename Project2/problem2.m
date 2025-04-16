@@ -4,9 +4,9 @@ close all; clear; clc;
 
 %% Extract State Space
 SS = load("Data/state_space.mat");
-A = SS.A';
-B = SS.C';
-C = SS.B';
+A = SS.A;
+B = SS.B;
+C = SS.C;
 D = SS.D';
 ss_sys = ss(A,B,C,D);
 
@@ -22,25 +22,21 @@ Desired_poles = [p1, p2, p3, p4];
 
 % Design Gain Matrix K to get desired poles
 K = place(A,B,Desired_poles);
-save('Data/K_matrix.mat', 'K');
+% save('Data/K_matrix.mat', 'K');
 
 
 %% Find Loop Gain, Closed Loop TF, and TF from Reference to Plant Input
 % Loop Gain
 s = tf('s');
-%Lg_neg_test = K * inv(s * eye(size(A)) - A) * B;
 Lg_neg = tf(ss(A, B, K, 0));
 
 % Closed Loop TF
-% F =  inv(C*inv(-A+B*K)*B);
-% Cl_Tf = C*inv(s*eye(size(A))-A+B*K)*B*F;
 Acl = A - B*K;
-F = pinv(C * (Acl \ B));
+F = pinv(C * (-Acl \ B));
 Cl_Tf = tf(ss(Acl, B*F, C, 0));
-        
+
 
 % Reference to Plant Input
-% Cl_u2r = inv(1+K*inv(s*eye(size(A))-A)*B)*F;
 Cl_u2r = inv(1+Lg_neg)*F;
 [mag_u2r, phase_u2r, wout_u2r] = bode(Cl_u2r);
 mag_u2r = squeeze(mag_u2r);
@@ -50,47 +46,6 @@ input_limit_dB = 20*log10(67);
 %% Plot Bode Plot for Loop gain, Closed Loop, and Reference to Plant Input Response
 %CL_bode_plot(Lg_neg, Cl_Tf ,'Figures/Problem2/', "Problem 2");
 ss_bode_plots(A,B,C,D,K,F);
-
-% Loop Gain Bode
-% figure;
-% bode(Lg_neg);
-% grid on; % Turn on grid
-% title('Bode Plot of Negative Loop Gain'); % Add a title
-% xlabel('Frequency (rad/s)'); % X-axis label
-% 
-% % Closed Loop Bode
-% figure;
-% bode(Cl_Tf);
-% grid on; % Turn on grid
-% title('Bode Plot of Closed Loop TF'); % Add a title
-% xlabel('Frequency (rad/s)'); % X-axis label
-
-% Reference to Plant Input
-% figure(6);
-% set(gcf, 'Position', [100, 100, 500, 400]); 
-% % Magnitude subplot
-% subplot(2,1,1)
-% semilogx(wout_u2r, db(mag_u2r), 'b', 'LineWidth', 2);
-% hold on;
-% xline(2*pi, 'k--', 'LineWidth', 1, 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom');
-% yline(input_limit_dB, 'r--', 'LineWidth', 1.5, 'DisplayName', 'Input Limit');
-% ylabel('Magnitude (dB)');
-% xlabel('Frequency (rad/s)');
-% title('Reference to Plant Input Magnitude');
-% legend('Cl\_u2r', 'Input Limit');
-% grid on;
-% xlim([wout_u2r(1), wout_u2r(end)]);
-% % Phase subplot
-% subplot(2,1,2)
-% semilogx(wout_u2r, phase_u2r, 'b', 'LineWidth', 2);
-% hold on;
-% xline(2*pi, 'k--', 'LineWidth', 1, 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom');
-% xlabel('Frequency (rad/s)');
-% ylabel('Phase (deg)');
-% title('Reference to Plant Input Phase');
-% grid on;
-% xlim([wout_u2r(1), wout_u2r(end)]);
-% sgtitle('Bode Plot of Reference to Plant Input Transfer Function');
 
 %% Plot Ol and Cl pole locations
 % Calculate open-loop and closed-loop poles
