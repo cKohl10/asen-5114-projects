@@ -115,11 +115,20 @@ subplot(2,1,2)
 semilogx(wout_lg, phase_lg, 'linewidth', 2);
 hold on;
 for i = 1:length(gain_crossover_ind)
-    % Plot green if good phase margin, otherwise red
-    if phase_lg(gain_crossover_ind(i)) >= -140
-        good_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'g', 'LineWidth', 1.5);
+    % Check if the phase margin is good or bad
+    if (abs(phase_lg(gain_crossover_ind(i)) - 180) >= 40 && abs(phase_lg(gain_crossover_ind(i)) + 180) >= 40)
+        if (abs(phase_lg(gain_crossover_ind(i)) - 180) < abs(phase_lg(gain_crossover_ind(i)) + 180))
+            good_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [180, phase_lg(gain_crossover_ind(i))], 'Color', 'g', 'LineWidth', 1.5);
+        else
+            good_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'g', 'LineWidth', 1.5);
+        end
     else
-        bad_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'r', 'LineWidth', 1.5);
+        % Closest to 180 degrees
+        if (abs(phase_lg(gain_crossover_ind(i)) - 180) < 40)
+            bad_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [180, phase_lg(gain_crossover_ind(i))], 'Color', 'r', 'LineWidth', 1.5);
+        else
+            bad_phase = line([wout_lg(gain_crossover_ind(i)), wout_lg(gain_crossover_ind(i))], [-180, phase_lg(gain_crossover_ind(i))], 'Color', 'r', 'LineWidth', 1.5);
+        end
     end
 end
 yline(-180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
