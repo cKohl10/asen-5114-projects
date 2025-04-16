@@ -1,4 +1,4 @@
-function CL_bode_plot(Lg, save_location, prob_name)
+function CL_bode_plot(Lg, Cl_Tf ,save_location, prob_name)
 
     if ~isstruct(Lg)
         % Compute the frequency response
@@ -7,14 +7,13 @@ function CL_bode_plot(Lg, save_location, prob_name)
         mag_lg = squeeze(mag_lg);
 
         % Calculate the closed loop response
-        T = feedback(Lg, 1);
-        [mag_cl, phase_cl, wout_cl] = bode(T);
+        [mag_cl, phase_cl,wout_cl] = bode(Cl_Tf);
+        mag_cl = squeeze(mag_cl);  
         phase_cl = squeeze(phase_cl);
-        mag_cl = squeeze(mag_cl);
 
         % Calculate the closed loop bandwidth
-        closed_loop_bandwidth = bandwidth(T);
-
+        closed_loop_bandwidth = bandwidth(Cl_Tf);
+  
     else
         mag_lg = Lg.lg_mag;
         phase_lg = Lg.lg_phase;
