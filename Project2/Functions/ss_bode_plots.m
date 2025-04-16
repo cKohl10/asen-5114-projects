@@ -13,10 +13,12 @@ function ss_bode_plots(A, B, C, D, K, F)
 
 % Loop gain tf
 s = tf('s');
-Lg = K*inv(eye(size(A)).*s - A)*B;
+Lg = tf(ss(A, B, K, 0));
 
 % Closed loop tf
-Cl = C * inv(eye(size(A)).*s - A + B*K) * B * F;
+Acl = A - B*K;
+sys_cl = ss(Acl, B, C, 0);
+Cl = tf(sys_cl) * F;
 
 % Torque input closed loop tf
 In = inv(eye(length(K(:,1))) + K*inv(s*eye(size(A)) - A)*B)*F;
@@ -42,13 +44,21 @@ closed_loop_bandwidth = bandwidth(Cl);
 gain_crossover_ind = find(diff(sign(db(mag_lg))) < 0 | diff(sign(db(mag_lg))) == 2);
 
 % Gain Margin
-phase_crossover_ind = find(diff(sign(phase_lg + 180)) < 0 | diff(sign(phase_lg + 180)) == 2);
+phase_crossover_ind = find(diff(sign(phase_lg + 180)) < 0 | diff(sign(phase_lg + 180)) == 2 | diff(sign(phase_lg - 180)) < 0 | diff(sign(phase_lg - 180)) == 2);
 
-% Report crossover frequencies and margins
+% Report crossover frequencies and minimum margins
 if ~isempty(gain_crossover_ind)
-    idx = gain_crossover_ind(1); % Report based on the first crossing
-    current_pm = 180 + phase_lg(idx);
-    fprintf('Phase Margin: %.2f deg (at %.3f rad/s)\n', current_pm, wout_lg(idx)); 
+    min_pm = 360;
+    min_idx = gain_crossover_ind(1);
+    for i = 1:length(gain_crossover_ind)
+        idx = gain_crossover_ind(i);
+        current_pm = min([abs(phase_lg(idx) - 180), abs(phase_lg(idx) + 180)]);
+        if (current_pm < min_pm)
+            min_pm = current_pm;
+            min_idx = idx;
+        end
+    end
+    fprintf('Phase Margin: %.2f deg (at %.3f rad/s)\n', min_pm, wout_lg(min_idx)); 
 else
     fprintf('No Gain Crossover Frequency found.\n');
 end
@@ -132,6 +142,7 @@ for i = 1:length(gain_crossover_ind)
     end
 end
 yline(-180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
+yline(180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
 yline(-140, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
 
 % Add scatter points for crossovers
@@ -139,7 +150,7 @@ if ~isempty(gain_crossover_ind)
     scatter(wout_lg(gain_crossover_ind), phase_lg(gain_crossover_ind), 60, 'm', 'filled', 'DisplayName', 'Gain Crossover');
 end
 if ~isempty(phase_crossover_ind)
-    scatter(wout_lg(phase_crossover_ind), -180*ones(size(phase_crossover_ind)), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
+    scatter(wout_lg(phase_crossover_ind), phase_lg(phase_crossover_ind), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
 end
 
 title('Phase');
