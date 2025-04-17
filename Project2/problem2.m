@@ -7,7 +7,7 @@ SS = load("Data/state_space.mat");
 A = SS.A;
 B = SS.B;
 C = SS.C;
-D = SS.D';
+D = SS.D;
 ss_sys = ss(A,B,C,D);
 
 %% Determine Desired Closed
@@ -71,7 +71,7 @@ bw = bandwidth(Cl_Tf,-3.05);
 GM = 20*log10(GM);
 
 %% Display State Variable Feedback Results
-%clc;
+clc;
 fprintf('Closed-Loop Poles:\n');
 for i = 1:length(closed_loop_poles)
     fprintf('%.4f %+.4fj\n', real(closed_loop_poles(i)), imag(closed_loop_poles(i)));
