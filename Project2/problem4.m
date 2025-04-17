@@ -60,11 +60,12 @@ disp(['Phase Margin: ', num2str(PM), 'deg']);
 disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
 
 %% Plotting
-figure;
-bode(Lg_neg);
-
-figure;
-bode(Cl_Tf);
+Lg_Cl_Bode_Plots(Lg_neg,Cl_Tf);
+% figure;
+% bode(Lg_neg);
+% 
+% figure;
+% bode(Cl_Tf);
 
 figure;
 nyquist(Lg_neg);
