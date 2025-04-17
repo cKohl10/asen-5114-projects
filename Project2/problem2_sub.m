@@ -43,7 +43,11 @@ function plot_cost_space(x0, lb, ub, A, B, C)
                     if mod(count, round(max_count/10))==0
                         sprintf("%i / %i",count, max_count)
                     end
-                    J_grid(i,j,k,l) = pole_bandwidth_cost([coords{1}(i), coords{2}(j), coords{3}(k), coords{4}(l)], A, B, C);
+                    cost = pole_bandwidth_cost([coords{1}(i), coords{2}(j), coords{3}(k), coords{4}(l)], A, B, C);
+                    if cost == 1e-6
+                        cost = -1;
+                    end
+                    J_grid(i,j,k,l) = dB(cost);
                 end
             end
         end
