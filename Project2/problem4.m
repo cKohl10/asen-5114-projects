@@ -31,12 +31,8 @@ D_comb = D;
 %% Analyse Step Response
 ss_comb = ss(A_comb,B_comb,C_comb,D_comb);
 Cl_Tf = tf(ss_comb);
-
 ss_response = stepinfo(ss_comb,'SettlingTimeThreshold',0.05);
 
-if(ss_response.SettlingTime<3)
-    disp(['5% Settling Time: ', num2str(ss_response.SettlingTime), ' sec'])
-end
 
 %% Calculate the Negative Loop Gain (Cut at Plant Input)
 G1 = tf(ss(A-L*C,B,K,0));
@@ -49,7 +45,12 @@ bw = bandwidth(Cl_Tf,-3.05);
 [GM,PM] = margin(Lg_neg);
 GM = 20*log10(GM);
 closed_loop_poles = eig(A_comb);
+
 %% Display Stability Margins and Bandwidth
+if(ss_response.SettlingTime<3)
+    disp(['The System meets the 5% Settling Time Requirement: ', num2str(ss_response.SettlingTime), ' sec'])
+end
+
 fprintf('Closed-Loop Poles:\n');
 for i = 1:length(closed_loop_poles)
     fprintf('%.4f %+.4fj\n', real(closed_loop_poles(i)), imag(closed_loop_poles(i)));
