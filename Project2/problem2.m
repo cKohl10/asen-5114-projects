@@ -124,7 +124,7 @@ end
 disp(['Gain Margin: ', num2str(GM), 'dB']);
 disp(['Phase Margin: ', num2str(PM), 'deg']);
 disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
-
+save('Data/closed_loop_ss.mat','F','K');
 %% Functions 
 function x_opt = optimize_bandwidth()
     % Load system
@@ -135,7 +135,7 @@ function x_opt = optimize_bandwidth()
     x0 = [-0.069, 4.06,-4,-3];
     
     % Bounds: keep poles in stable LHP
-    lb = [-1000, 0.5,-100,-100];   % Avoid poles too close to jω
+    lb = [-1000, 0.5,-40,-40];   % Avoid poles too close to jω
     ub = [-0.01, 20,-0.05,-0.05];
 
     % Run fmincon
