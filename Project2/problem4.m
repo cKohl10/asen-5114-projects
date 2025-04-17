@@ -61,14 +61,10 @@ disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
 
 %% Plotting
 Lg_Cl_Bode_Plots(Lg_neg,Cl_Tf);
-% figure;
-% bode(Lg_neg);
-% 
-% figure;
-% bode(Cl_Tf);
+Nyquist_Plot(Lg_neg);
 
-figure;
-nyquist(Lg_neg);
+% figure;
+% nyquist(Lg_neg);
 
 figure; 
 step(ss_comb);
