@@ -15,8 +15,8 @@ phase_P = data(:,3) - pi/2;
 % Transfer function with anti resonance, resonance pair
 s = tf('s');
 DC_gain = 10^(-15/20);
-pole_1 = 0.3;
-pole_2 = 0.4;
+pole_1 = 0;
+pole_2 = 0.9;
 omega_ar1 = 4.601;   % anti-resonance frequency
 omega_r1 = 8.347;    % resonance frequency
 zeta_z = 0.015;
