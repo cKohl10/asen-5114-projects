@@ -13,6 +13,13 @@ ss_sys = ss(A,B,C,D);
 F = SVF.F;
 K = SVF.K;
 
+%% Load in Emperical Data
+data = readmatrix('data/Spacecraft_spin_module_frequency_response_data.xlsx');
+freq_exp = data(:,1)*2*pi;
+amp = data(:,2);
+emperical_mag = 20*log10(amp) - 20*log10(freq_exp);
+emperical_phase = data(:,3) - pi/2;
+
 %% Calculate the Closed Loop and choose Observer Poles
 Acl = A - B*K;
 Cl_Tf = tf(ss(Acl, B*F, C, 0));
@@ -35,10 +42,10 @@ ss_response = stepinfo(ss_comb,'SettlingTimeThreshold',0.05);
 
 
 %% Calculate the Negative Loop Gain (Cut at Plant Input)
-G1 = tf(ss(A-L*C,B,K,0));
-G2 = tf(ss(A-L*C,L,K,0));
-G3 = tf(ss(A,B,C,0));
-Lg_neg = (1/(1+G1))*G2*G3;
+T1 = tf(ss(A-L*C,B,K,0));
+T2 = tf(ss(A-L*C,L,K,0));
+P = tf(ss(A,B,C,0));
+Lg_neg = (1/(1+T1))*T2*P;
 
 %% Calculate the margins and bandwidth 
 bw = bandwidth(Cl_Tf,-3.05);
@@ -55,17 +62,22 @@ fprintf('Closed-Loop Poles:\n');
 for i = 1:length(closed_loop_poles)
     fprintf('%.4f %+.4fj\n', real(closed_loop_poles(i)), imag(closed_loop_poles(i)));
 end
-disp(['Gain Margin: ', num2str(GM), 'dB']);
-disp(['Phase Margin: ', num2str(PM), 'deg']);
-disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
+
+%% Emperical Response
+Temp = (1/(1+T1))*T2;
+[mag_temp, phase_temp, wout] = bode(Temp,freq_exp);
+phase_temp = squeeze(phase_temp);
+mag_temp = squeeze(mag_temp);
+emperical_lg_neg_mag = 10.^(emperical_mag./20).*mag_temp;
+emperical_lg_neg_phase = emperical_phase + phase_temp;
 
 %% Plotting
+% Plot Bode
 Lg_Cl_Bode_Plots(Lg_neg,Cl_Tf);
+% Plot Nyquist
 Nyquist_Plot(Lg_neg);
-
-% figure;
-% nyquist(Lg_neg);
-
-figure; 
-step(ss_comb);
+% Plot Step Response
+StepResponsePlot(Cl_Tf, 'Step Response');
+%Emperical Loop Gain Bode Plot 
+emperical_bode_plot(emperical_lg_neg_mag,emperical_lg_neg_phase,wout);
 

@@ -21,7 +21,7 @@ function Nyquist_Plot(Lg_neg)
         plot(PM(1), PM(2), 'go', 'MarkerSize', 8, 'LineWidth', 2);
         text(PM(1), PM(2)-0.15, 'PM', 'Color', 'g', 'FontSize', 12);
     end
-    
+
     % Plot gain margin point (phase = -180 crossover)
     if exist('GM', 'var')
         plot(-1/GM, 0, 'mo', 'MarkerSize', 8, 'LineWidth', 2);

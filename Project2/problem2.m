@@ -9,7 +9,8 @@ B = SS.B;
 C = SS.C;
 D = SS.D;
 ss_sys = ss(A,B,C,D);
-
+Ol_zero = zero(ss_sys);
+Ol_pole = pole(ss_sys);
 %% Determine Desired Closed
 % Desired closed-loop bandwidth = 1 Hz
 j = sqrt(-1);
@@ -18,6 +19,11 @@ p1 = x_opt(1)+x_opt(2)*j;
 p2 = x_opt(1)-x_opt(2)*j;
 p3 = x_opt(3);     
 p4 = x_opt(4);
+
+% p1 = Ol_zero(1);
+% p2 = Ol_zero(2);
+% p3 = -35;     
+% p4 = -34;
 Desired_poles = [p1, p2, p3, p4];
 
 % Design Gain Matrix K to get desired poles
@@ -51,7 +57,7 @@ ss_bode_plots(A,B,C,D,K,F);
 % Calculate open-loop and closed-loop poles
 open_loop_poles = pole(ss(A, B, C, 0));
 closed_loop_poles = eig(A - B*K);
-
+Nyquist_Plot(Lg_neg);
 % Plot poles on complex plane
 figure;
 hold on;
