@@ -5,7 +5,7 @@ close all; clear; clc;
 
 %% Frequency Response System Identification
 % Read the data from the file
-data = readmatrix('data\Spacecraft_spin_module_frequency_response_data.xlsx');
+data = readmatrix('data/Spacecraft_spin_module_frequency_response_data.xlsx');
 freq_exp = data(:,1)*2*pi;
 amp = data(:,2);
 amp_db_P = 20*log10(amp) - 20*log10(freq_exp);
