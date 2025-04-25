@@ -85,7 +85,7 @@ end
 disp(['Gain Margin: ', num2str(GM), 'dB']);
 disp(['Phase Margin: ', num2str(PM), 'deg']);
 disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
-save('Data/closed_loop_ss.mat','F','K');
+%save('Data/closed_loop_ss.mat','F','K');
 
 %% Functions 
 function x_opt = optimize_bandwidth()
