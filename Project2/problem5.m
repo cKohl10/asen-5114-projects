@@ -15,6 +15,9 @@ load('Data/closed_loop_ss.mat')
 
 fig_size = [100, 100, 1000, 800];
 
+% Set the observer initial conditions
+xhat_initial_conditions = [0.1; 0.1; 0.1; 0.1];
+
 % Step response
 useSine = false;
 u_amp = 0.1;
