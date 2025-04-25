@@ -75,7 +75,7 @@ C_obs = B';
 D_obs = D';
 
 % Save state space realizations
-save('data/state_space.mat' , 'A', 'B', 'C', 'D', 'A_obs', 'B_obs', 'C_obs', 'D_obs');
+save('Data/state_space.mat' , 'A', 'B', 'C', 'D', 'A_obs', 'B_obs', 'C_obs', 'D_obs');
 
 % Check controllability
 ctrl_mat = ctrb(A, B);
