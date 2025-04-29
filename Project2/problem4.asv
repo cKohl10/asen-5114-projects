@@ -25,10 +25,9 @@ Acl = A - B*K;
 Cl_Tf = tf(ss(Acl, B*F, C, 0));
 Cl_poles = pole(Cl_Tf);
 
-obs_poles(1) = 5 *real(Cl_poles(1));
-obs_poles(2) = 5 *real(Cl_poles(2));
-obs_poles(3) = 20 *real(Cl_poles(3)) + 0.8*imag(Cl_poles(3))*1j;
-obs_poles(4) = 20 *real(Cl_poles(4)) + 0.8*imag(Cl_poles(4))*1j;
+obs_poles() = 5 *real(Cl_poles);
+obs_poles(3) = obs_poles(3)+imag(Cl_poles(3))*1j;
+obs_poles(4) = obs_poles(4)+imag(Cl_poles(4))*1j;
 L = place(A', C', obs_poles)';
 
 A_comb = [A-B*K , B*K; zeros(size(A)), A-L*C];
@@ -39,6 +38,7 @@ D_comb = D;
 %% Analyse Step Response
 ss_comb = ss(A_comb,B_comb,C_comb,D_comb);
 Cl_Tf = tf(ss_comb);
+ss_response = stepinfo(ss_comb,'SettlingTimeThreshold',0.05);
 
 
 %% Calculate the Negative Loop Gain (Cut at Plant Input)
@@ -54,9 +54,9 @@ GM = 20*log10(GM);
 closed_loop_poles = eig(A_comb);
 
 %% Display Stability Margins and Bandwidth
-% if(ss_response.SettlingTime<3)
-%     disp(['The System meets the 5% Settling Time Requirement: ', num2str(ss_response.SettlingTime), ' sec'])
-% end
+if(ss_response.SettlingTime<3)
+    disp(['The System meets the 5% Settling Time Requirement: ', num2str(ss_response.SettlingTime), ' sec'])
+end
 
 fprintf('Closed-Loop Poles:\n');
 for i = 1:length(closed_loop_poles)
@@ -74,19 +74,16 @@ emperical_lg_neg_phase = emperical_phase + phase_temp;
 %% Plotting
 % Plot Bode
 Lg_Cl_Bode_Plots(Lg_neg,Cl_Tf);
-
 % Plot Nyquist
 Nyquist_Plot(Lg_neg);
-
 % Plot Step Response
 A_comb = [A-B*K , B*K; zeros(size(A)), A-L*C];
 B_comb = [B*F;zeros(size(A,1),1)];
 C_comb = eye(8,8);
 D_comb = D;
 ss_comb = ss(A_comb,B_comb,C_comb,D_comb);
-StepResponsePlot(ss_comb, 'Step Response');
-
+Cl_Tf = tf(ss_comb);
+StepResponsePlot(Cl_Tf, 'Step Response');
 %Emperical Loop Gain Bode Plot 
-disp(' ')
 emperical_bode_plot(emperical_lg_neg_mag,emperical_lg_neg_phase,wout);
 

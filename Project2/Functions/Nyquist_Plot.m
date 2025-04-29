@@ -15,7 +15,7 @@ function Nyquist_Plot(Lg_neg)
     % Critical point
     plot(-1, 0, 'rx', 'MarkerSize', 10, 'LineWidth', 2);
     text(-1.5, 0, 'Crit Pt', 'FontSize', 12, 'Color', 'r');
-    
+
     % Plot phase margin point (gain = 1 crossover)
     if exist('PM', 'var')
         plot(PM(1), PM(2), 'go', 'MarkerSize', 8, 'LineWidth', 2);
@@ -27,7 +27,7 @@ function Nyquist_Plot(Lg_neg)
         plot(-1/GM, 0, 'mo', 'MarkerSize', 8, 'LineWidth', 2);
         text(-1/GM, 0.1, '1/GM', 'Color', 'm', 'FontSize', 12);
     end
-    
+
     theta = linspace(0, 2*pi, 500);
     x_unit = cos(theta);
     y_unit = sin(theta);

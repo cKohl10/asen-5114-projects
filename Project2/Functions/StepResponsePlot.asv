@@ -1,9 +1,7 @@
 function StepResponsePlot(sys, title_str)
 % Calculate the step response
-t = linspace(0, 10, 1000);
-x0 = [0,0,0,0,0.1,0.1,0.1,0.1];
-[y, t] = initial(sys, x0, t);
-x_error = y(:,5:end);
+[y, t] = step(sys);
+x_error = y(:,1:4) - y(:,5:end);
 
 % Figure setup
 figure;
@@ -14,14 +12,10 @@ for i = 1:4
     
     % Red line at 3 seconds
     xline(3, 'r--', 'LineWidth', 1.5, 'DisplayName', '3 sec marker');
-
-    yline(0.05, 'k--', 'LineWidth', 1.5, 'DisplayName', '+5%')
-    yline(-0.05, 'k--', 'LineWidth', 1.5, 'DisplayName', '-5%')
-
+    yline(x_error(end,i)*1.05, 'k--', 'LineWidth', 1.5, 'DisplayName', 'Settling Time')
     xlabel('Time (s)', 'FontSize', 12);
     ylabel(['x_{error', num2str(i), '}(t)'], 'FontSize', 12);
     title(['State Error x_{', num2str(i), '}(t)'], 'FontSize', 14);
-    ylim([-0.1,0.1])
     grid on;
     legend show;
 end
