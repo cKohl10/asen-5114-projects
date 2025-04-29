@@ -36,6 +36,9 @@ B_comb = [B*F;zeros(size(A,1),1)];
 C_comb = [C,zeros(1,size(A,1))];
 D_comb = D;
 
+% Save the observer characteristics
+save('Data/observer_ss.mat', 'A_comb', 'B_comb', 'C_comb', 'D_comb', 'L')
+
 %% Analyse Step Response
 ss_comb = ss(A_comb,B_comb,C_comb,D_comb);
 Cl_Tf = tf(ss_comb);
