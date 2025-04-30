@@ -66,13 +66,13 @@ for i = 1:length(closed_loop_poles)
     fprintf('%.4f %+.4fj\n', real(closed_loop_poles(i)), imag(closed_loop_poles(i)));
 end
 
-%% Emperical Response
+%% Empirical Response
 Temp = (1/(1+T1))*T2;
 [mag_temp, phase_temp, wout] = bode(Temp,freq_exp);
 phase_temp = squeeze(phase_temp);
 mag_temp = squeeze(mag_temp);
 emperical_lg_neg_mag = 10.^(emperical_mag./20).*mag_temp;
-emperical_lg_neg_phase = emperical_phase + phase_temp;
+emperical_lg_neg_phase = rad2deg(emperical_phase) + phase_temp;
 
 %% Plotting
 % Plot Bode
@@ -80,6 +80,9 @@ Lg_Cl_Bode_Plots(Lg_neg,Cl_Tf);
 
 % Plot Nyquist
 Nyquist_Plot(Lg_neg);
+
+% Plot empirical nyquist
+nyquist_exp(emperical_lg_neg_mag, deg2rad(emperical_lg_neg_phase), Lg_neg, freq_exp);
 
 % Plot Step Response
 A_comb = [A-B*K , B*K; zeros(size(A)), A-L*C];

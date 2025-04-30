@@ -1,0 +1,13 @@
+function Gjw = nyquist_exp(freq, mag, phase, plotBool)
+%NYQUIST_EXP Creates a Nyquist plot from the empirical data and overlays
+%analytical nyquist
+% freq = rad/s
+% mag = db(rad/s/V)
+% phase = rad
+% plotBool = true -> Creates the figure, otherwise just returns the
+% complex response
+
+
+
+end
+
