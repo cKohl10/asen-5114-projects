@@ -49,6 +49,9 @@ mag_u2r = squeeze(mag_u2r);
 phase_u2r = squeeze(phase_u2r);
 input_limit_dB = 20*log10(67); 
 
+% Output the poles of the plant input transfer function
+pole(Cl_u2r)
+
 %% Plot Bode Plot for Loop gain, Closed Loop, and Reference to Plant Input Response
 %CL_bode_plot(Lg_neg, Cl_Tf ,'Figures/Problem2/', "Problem 2");
 ss_bode_plots(A,B,C,D,K,F);
@@ -85,7 +88,7 @@ end
 disp(['Gain Margin: ', num2str(GM), 'dB']);
 disp(['Phase Margin: ', num2str(PM), 'deg']);
 disp(['Closed-loop bandwidth: ', num2str(bw), ' rad/s']);
-%save('Data/closed_loop_ss.mat','F','K');
+save('Data/closed_loop_ss.mat','F','K');
 
 %% Functions 
 function x_opt = optimize_bandwidth()

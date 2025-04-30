@@ -19,20 +19,22 @@ fig_size = [100, 100, 1000, 800];
 
 % Step response
 useSine = false;
-u_amp = 1;
+u_amp = 0.1;
 u_w = 0;
-out = sim('Simulink/model_response', 'StopTime', '100');
+out = sim('model_response', 'StopTime', '10');
 control_plot(out, fig_size, "Figures", "P3 Step Response");
 
 % Step response 0.1 Hz
 useSine = true;
 u_w = 0.1 * 2 * pi; % rad/s
-out = sim('Simulink/model_response', 'StopTime', '100');
-control_plot(out, fig_size, "Figures", "P3 Step Response 0.1 Hz");
+out = sim('model_response', 'StopTime', '50');
+control_plot(out, fig_size, "Figures", "P3 Sine Response 0.1 Hz");
 
 % Step response 1 Hz
 useSine = true;
-u_amp = 60/10^(51/20);
+u_amp = 0.1;
 u_w = 2 * pi; % rad/s
-out = sim('Simulink/model_response', 'StopTime', '20');
-control_plot(out, fig_size, "Figures", "P3 Step Response 1 Hz");
+out = sim('model_response', 'StopTime', '50');
+control_plot(out, fig_size, "Figures", "P3 Sine Response 1 Hz");
+
+

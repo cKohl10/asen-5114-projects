@@ -16,10 +16,10 @@ load('Data/closed_loop_ss.mat')
 fig_size = [100, 100, 1000, 800];
 
 % Set the observer initial conditions
-% xhat_initial_conditions = [0.1; 0.1; 0.1; 0.1];
-xhat_initial_conditions = [0; 0; 0; 0];
-% ic_string = "Non-Zero ICs";
-ic_string = "Zero ICs";
+xhat_initial_conditions = [0.1; 0.1; 0.1; 0.1];
+% xhat_initial_conditions = [0; 0; 0; 0];
+ic_string = "Non-Zero ICs";
+% ic_string = "Zero ICs";
 
 % Step response
 useSine = false;
