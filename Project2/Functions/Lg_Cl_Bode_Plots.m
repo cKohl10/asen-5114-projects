@@ -61,12 +61,13 @@ fprintf('Closed Loop Bandwidth: %.3f rad/s\n', closed_loop_bandwidth);
 
 %% Loop Gain Bode Plot
 % Plot the model bode plot
+Font_Size = 12; 
 figure;
 set(gcf, 'Position', [100, 100, 500, 400]); % Resize figure window
 subplot(2,1,1)
 semilogx(wout_lg, db(mag_lg), 'b', 'linewidth', 2);
 hold on;
-yline(-10, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
+%yline(-10, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
 if(~isempty(phase_crossover_ind))
     for i = 1:length(phase_crossover_ind)
         if db(mag_lg(phase_crossover_ind(i))) < -10
@@ -80,32 +81,45 @@ yline(0, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
 
 % Add scatter points for crossovers
 if ~isempty(gain_crossover_ind)
-    scatter(wout_lg(gain_crossover_ind), zeros(size(gain_crossover_ind)), 60, 'm', 'filled', 'DisplayName', 'Gain Crossover');
+    gain_crossover = scatter(wout_lg(gain_crossover_ind), zeros(size(gain_crossover_ind)), 60, 'm', 'filled', 'DisplayName', 'Gain Crossover');
 end
 if ~isempty(phase_crossover_ind)
-    scatter(wout_lg(phase_crossover_ind), db(mag_lg(phase_crossover_ind)), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
+    phase_crossover = scatter(wout_lg(phase_crossover_ind), db(mag_lg(phase_crossover_ind)), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
 end
 
-title('Magnitude');
-xlabel('Frequency (rad/s)');
-ylabel('Amplitude (dB)');
+title('Magnitude','FontSize',Font_Size);
+xlabel('Frequency (rad/s)','FontSize',Font_Size);
+ylabel('Amplitude (dB)','FontSize',Font_Size);
 xlim([wout_lg(1), wout_lg(end)]);
 grid on;
 
 % Add legend
 try
-    legend([good_gain, bad_gain], 'Good Gain Margin', 'Bad Gain Margin', 'location' ,'best');
+    legend([good_gain, bad_gain,gain_crossover], 'Good Gain Margin', 'Bad Gain Margin','Gain Crossover','location' ,'best','FontSize',Font_Size);
 catch
     try 
-        legend([good_gain], 'Good Gain Margin', 'location' ,'best');
+        legend([good_gain,gain_crossover], 'Good Gain Margin', 'Gain Crossover','location' ,'best','FontSize',Font_Size);
     catch
         try
-            legend([bad_gain], 'Bad Gain Margin', 'location' ,'best');
+            legend([bad_gain,gain_crossover], 'Bad Gain Margin', 'Gain Crossover','location' ,'best','FontSize',Font_Size);
         catch
-            x = 1;
+            try 
+                legend(good_gain, 'Good Gain Margin','location' ,'best','FontSize',Font_Size);
+            catch
+                try
+                    legend(bad_gain, 'Bad Gain Margin','location' ,'best','FontSize',Font_Size);
+                catch
+                    try
+                        legend(gain_crossover, 'Gain Crossover','location' ,'best','FontSize',Font_Size);
+                    catch
+                        x = 1;
+                    end
+                end
+            end
         end
     end
 end
+
 
 % Plot the phase plot
 subplot(2,1,2)
@@ -130,34 +144,45 @@ for i = 1:length(gain_crossover_ind)
 end
 yline(-180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
 yline(180, 'color', 'r', 'linestyle', ':', 'linewidth', 1.5)
-yline(-140, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
+%yline(-140, 'color', 'g', 'linestyle', ':', 'linewidth', 1.5)
 
 % Add scatter points for crossovers
 if ~isempty(gain_crossover_ind)
-    scatter(wout_lg(gain_crossover_ind), phase_lg(gain_crossover_ind), 60, 'm', 'filled', 'DisplayName', 'Gain Crossover');
+    gain_crossover = scatter(wout_lg(gain_crossover_ind), phase_lg(gain_crossover_ind), 60, 'm', 'filled', 'DisplayName', 'Gain Crossover');
 end
 if ~isempty(phase_crossover_ind)
-    scatter(wout_lg(phase_crossover_ind), phase_lg(phase_crossover_ind), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
+    phase_crossover = scatter(wout_lg(phase_crossover_ind), phase_lg(phase_crossover_ind), 60, 'c', 'filled', 'DisplayName', 'Phase Crossover');
 end
 
-title('Phase');
-xlabel('Frequency (rad/s)');
-ylabel('Phase (deg)');
+title('Phase','FontSize',Font_Size);
+xlabel('Frequency (rad/s)','FontSize',Font_Size);
+ylabel('Phase (deg)','FontSize',Font_Size);
 xlim([wout_lg(1), wout_lg(end)]);
-sgtitle('Loop Gain Bode Plot')
+sgtitle('Loop Gain Bode Plot','FontSize',Font_Size)
 grid on;
 
 % Add legend
 try
-    legend([good_phase, bad_phase], 'Good Phase Margin', 'Bad Phase Margin', 'location' ,'best');
+    legend([good_phase, bad_phase,phase_crossover], 'Good Phase Margin', 'Bad Phase Margin','Phase Crossover' ,'location' ,'best','best','FontSize',Font_Size);
 catch
     try 
-        legend([good_phase], 'Good Phase Margin', 'location' ,'best');
+        legend([good_phase,phase_crossover], 'Good Phase Margin','Phase Crossover' ,'location' ,'best','FontSize',Font_Size);
     catch
         try
-            legend([bad_phase], 'Bad Phase Margin', 'location' ,'best');
+            legend([bad_phase,phase_crossover], 'Bad Phase Margin','Phase Crossover' ,'location' ,'best','FontSize',Font_Size);
         catch
-            x = 1;
+            try 
+                legend(good_phase, 'Good Phase Margin' ,'location' ,'best','FontSize',Font_Size);
+            catch
+                try
+                    legend(bad_phase, 'Bad Phase Margin' ,'location' ,'best','FontSize',Font_Size);
+                catch
+                    try
+                         legend(phase_crossover,'Phase Crossover' ,'location' ,'best','FontSize',Font_Size);
+                    catch
+                    x = 1;
+                end
+            end
         end
     end
 end
@@ -172,11 +197,11 @@ hold on;
 xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
 bandwidth_plot = xline(closed_loop_bandwidth, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--', 'label', closed_loop_bandwidth, 'LabelVerticalAlignment', 'bottom');
 yline(-3, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
-title('Magnitude');
-xlabel('Frequency (rad/s)');
-ylabel('Amplitude (dB)');
+title('Magnitude','FontSize',Font_Size);
+xlabel('Frequency (rad/s)','FontSize',Font_Size);
+ylabel('Amplitude (dB)','FontSize',Font_Size);
 xlim([wout_cl(1), wout_cl(end)]);
-legend([bandwidth_plot], 'Bandwidth');
+legend(bandwidth_plot, 'Bandwidth','FontSize',Font_Size);
 grid on;
 
 % Plot the phase plot
@@ -185,11 +210,11 @@ semilogx(wout_cl, phase_cl, 'color', 'g', 'linewidth', 2);
 hold on;
 xline(2*pi, 'k--', 'LineWidth', 1, 'DisplayName', '1 Hz', 'Label', '1 Hz', 'LabelVerticalAlignment', 'bottom'); % Add line at 1 Hz with label
 % xline(2*pi, 'linewidth', 1.5, 'color', 'r', 'linestyle', '--')
-title('Phase');
-xlabel('Frequency (rad/s)');
-ylabel('Phase (deg)');
+title('Phase','FontSize',Font_Size);
+xlabel('Frequency (rad/s)','FontSize',Font_Size);
+ylabel('Phase (deg)','FontSize',Font_Size);
 xlim([wout_cl(1), wout_cl(end)]);
-sgtitle('Closed Loop Bode Plot')
+sgtitle('Closed Loop Bode Plot','FontSize',Font_Size)
 grid on;
 
 %% Control Input Bode Plot
